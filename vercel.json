@@ -12,12 +12,15 @@
   ],
   "routes": [
     {
-      "src": "/favicon.ico",
-      "dest": "/public/favicon.ico"
+      "src": "/api/(.*)",
+      "dest": "/server.js"
     },
     {
-      "src": "/(.*\\.(css|js|html|png|jpg|jpeg|gif|svg|webp|json|txt|woff2|woff|ttf|eot))$",
+      "src": "/(.*)",
       "dest": "/public/$1"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
