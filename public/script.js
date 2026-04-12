@@ -12,8 +12,7 @@ let allCategories = [];
 
 // ============= INICIALIZAÇÃO =============
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 MOVTV PLAYER - Inicializando...');
-    console.log('📍 API_BASE:', API_BASE);
+    console.log('🚀 MOVTV PLAYER v2 - Inicializando...');
     initApp();
     initEventListeners();
     loadCategories();
@@ -33,25 +32,21 @@ function initApp() {
                 fullscreenToggle: true
             }
         });
-        console.log('✅ Video.js inicializado');
-    } else {
-        console.warn('⚠️ Video.js não carregado');
     }
 }
 
 function initEventListeners() {
-    console.log('🔧 Configurando event listeners...');
-    
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => switchMode(btn.dataset.mode));
     });
     
-    document.querySelector('.categories-wrapper').addEventListener('click', (e) => {
-        const categoryBtn = e.target.closest('.category-btn');
-        if (categoryBtn) {
-            selectCategory(categoryBtn.dataset.category);
-        }
-    });
+    const wrapper = document.querySelector('.categories-wrapper');
+    if (wrapper) {
+        wrapper.addEventListener('click', (e) => {
+            const btn = e.target.closest('.category-btn');
+            if (btn) selectCategory(btn.dataset.category);
+        });
+    }
     
     const searchInput = document.getElementById('searchInput');
     const searchClear = document.getElementById('searchClear');
@@ -59,11 +54,9 @@ function initEventListeners() {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value;
-            searchClear.style.display = term ? 'flex' : 'none';
+            if (searchClear) searchClear.style.display = term ? 'flex' : 'none';
             clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                performSearch(term);
-            }, 500);
+            searchTimeout = setTimeout(() => performSearch(term), 500);
         });
     }
     
@@ -81,9 +74,7 @@ function initEventListeners() {
     const modal = document.getElementById('playerModal');
     const closeBtn = document.getElementById('playerClose');
     
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closePlayer);
-    }
+    if (closeBtn) closeBtn.addEventListener('click', closePlayer);
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closePlayer();
@@ -98,114 +89,71 @@ function initEventListeners() {
     if (grid) {
         grid.addEventListener('click', (e) => {
             const card = e.target.closest('.content-card');
-            if (card) {
-                const id = card.dataset.id;
-                const title = card.dataset.title;
-                console.log('🖱️ Card clicado:', title, 'ID:', id);
-                
-                if (!id || id === 'undefined') {
-                    console.error('❌ ID inválido');
-                    return;
-                }
-                
+            if (card && card.dataset.id) {
                 if (currentMode === 'movies') {
-                    playMovie(id, title);
+                    playMovie(card.dataset.id, card.dataset.title);
                 } else {
-                    playTVChannel(id, title);
+                    playTVChannel(card.dataset.id, card.dataset.title);
                 }
             }
         });
     }
-    
-    console.log('✅ Event listeners configurados');
 }
 
-// ============= FUNÇÕES DE MODO =============
+// ============= MODO =============
 function switchMode(mode) {
-    console.log('🔄 Mudando modo para:', mode);
     currentMode = mode;
-    
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === mode);
     });
     
-    const categoriesContainer = document.getElementById('categoriesContainer');
-    if (categoriesContainer) {
-        categoriesContainer.style.display = mode === 'movies' ? 'block' : 'none';
-    }
+    const catContainer = document.getElementById('categoriesContainer');
+    if (catContainer) catContainer.style.display = mode === 'movies' ? 'block' : 'none';
     
     const grid = document.getElementById('contentGrid');
-    if (grid) {
-        grid.classList.toggle('tv-mode', mode === 'tv');
-    }
+    if (grid) grid.classList.toggle('tv-mode', mode === 'tv');
     
     resetAndReload();
 }
 
-function selectCategory(categoryId) {
-    console.log('📂 Categoria selecionada:', categoryId);
-    currentCategory = categoryId;
-    
+function selectCategory(id) {
+    currentCategory = id;
     document.querySelectorAll('.category-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.category === categoryId);
+        btn.classList.toggle('active', btn.dataset.category === id);
     });
-    
     resetAndReload();
 }
 
-// ============= CARREGAMENTO DE CATEGORIAS =============
+// ============= CATEGORIAS =============
 async function loadCategories() {
-    console.log('📁 Carregando categorias...');
     try {
-        const response = await fetch(`${API_BASE}/categories`);
-        const data = await response.json();
+        const res = await fetch(`${API_BASE}/categories`);
+        const data = await res.json();
         
-        console.log('📦 Categorias - resposta bruta:', data);
+        console.log('📁 Categorias:', data);
         
-        let categories = [];
-        if (Array.isArray(data)) {
-            categories = data;
-            console.log('✅ Categorias extraídas (data é array)');
-        } else if (data.data && Array.isArray(data.data)) {
-            categories = data.data;
-            console.log('✅ Categorias extraídas (data.data é array)');
-        } else {
-            console.log('❌ Formato de categorias desconhecido. Procurando...');
-            const findArray = (obj, path = '') => {
-                if (!obj || typeof obj !== 'object') return;
-                Object.keys(obj).forEach(key => {
-                    const fullPath = path ? `${path}.${key}` : key;
-                    const value = obj[key];
-                    if (Array.isArray(value)) {
-                        console.log(`🔍 Array encontrado em: ${fullPath} (${value.length} itens)`);
-                        if (value.length > 0) {
-                            console.log('   Primeiro item:', value[0]);
-                        }
-                    }
-                });
-            };
-            findArray(data);
-        }
-        
-        console.log('📁 Total de categorias:', categories.length);
+        // 🔥 CORREÇÃO: data.data é o array (APK)
+        let categories = data.data || data || [];
+        if (!Array.isArray(categories)) categories = [];
         
         if (categories.length > 0) {
             allCategories = categories;
             renderCategories(categories);
         }
-    } catch (error) {
-        console.error('❌ Erro ao carregar categorias:', error);
+    } catch (e) {
+        console.error('Erro categorias:', e);
     }
 }
 
 function renderCategories(categories) {
-    console.log('🎨 Renderizando categorias...');
     const wrapper = document.querySelector('.categories-wrapper');
-    const defaultBtn = wrapper.querySelector('.category-btn');
+    if (!wrapper) return;
     
+    // Mantém o botão "Todos"
+    const allBtn = wrapper.querySelector('.category-btn[data-category="all"]');
     wrapper.innerHTML = '';
-    if (defaultBtn) {
-        wrapper.appendChild(defaultBtn.cloneNode(true));
+    if (allBtn) {
+        wrapper.appendChild(allBtn.cloneNode(true));
     } else {
         const btn = document.createElement('button');
         btn.className = 'category-btn active';
@@ -214,21 +162,18 @@ function renderCategories(categories) {
         wrapper.appendChild(btn);
     }
     
-    categories.forEach(category => {
+    categories.forEach(cat => {
         const btn = document.createElement('button');
         btn.className = 'category-btn';
-        btn.dataset.category = category.id || category.category_id || category.cat_id;
-        btn.innerHTML = `<i class="fas fa-folder"></i> ${category.name || category.category_name || category.title || 'Sem nome'}`;
+        // 🔥 CORREÇÃO: campos 'id' e 'name' (APK)
+        btn.dataset.category = cat.id || cat.category_id;
+        btn.innerHTML = `<i class="fas fa-folder"></i> ${cat.name || cat.category_name}`;
         wrapper.appendChild(btn);
     });
-    
-    console.log('✅ Categorias renderizadas:', categories.length);
 }
 
-// ============= CARREGAMENTO DE CONTEÚDO =============
+// ============= CONTEÚDO =============
 async function loadContent() {
-    console.log('📺 loadContent() - isLoading:', isLoading, 'hasMore:', hasMore);
-    
     if (isLoading || !hasMore) return;
     
     isLoading = true;
@@ -252,150 +197,84 @@ async function loadContent() {
         
         console.log('🌐 URL:', url);
         
-        const response = await fetch(url);
-        const data = await response.json();
+        const res = await fetch(url);
+        const data = await res.json();
         
-        console.log('📦 Dados brutos recebidos:', data);
-        console.log('📦 Tipo dos dados:', typeof data);
-        console.log('📦 É array?', Array.isArray(data));
+        console.log('📦 Resposta:', data);
         
-        if (data.data) {
-            console.log('📦 data.data existe?', !!data.data);
-            console.log('📦 data.data é array?', Array.isArray(data.data));
-            if (data.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
-                console.log('📦 Chaves de data.data:', Object.keys(data.data));
+        // 🔥 CORREÇÃO BASEADA NO APK:
+        // A API retorna { data: [...] } ou diretamente [...]
+        let items = data.data || data || [];
+        
+        // Se for objeto com outras propriedades, tenta encontrar array
+        if (!Array.isArray(items)) {
+            console.log('🔍 Procurando array em:', Object.keys(items));
+            // Tenta encontrar qualquer array
+            for (const key of Object.keys(items)) {
+                if (Array.isArray(items[key])) {
+                    items = items[key];
+                    console.log('✅ Array encontrado em:', key);
+                    break;
+                }
             }
         }
         
-        // Tenta extrair items
-        let items = [];
-        
-        if (Array.isArray(data)) {
-            items = data;
-            console.log('✅ Items extraídos (data é array)');
-        } else if (data.data && Array.isArray(data.data)) {
-            items = data.data;
-            console.log('✅ Items extraídos (data.data é array)');
-        } else if (data.data && data.data.data && Array.isArray(data.data.data)) {
-            items = data.data.data;
-            console.log('✅ Items extraídos (data.data.data é array)');
-        } else if (data.data && data.data.films && Array.isArray(data.data.films)) {
-            items = data.data.films;
-            console.log('✅ Items extraídos (data.data.films)');
-        } else if (data.data && data.data.items && Array.isArray(data.data.items)) {
-            items = data.data.items;
-            console.log('✅ Items extraídos (data.data.items)');
-        } else if (data.result && Array.isArray(data.result)) {
-            items = data.result;
-            console.log('✅ Items extraídos (data.result)');
-        } else if (data.data && data.data.lists) {
-            // Estrutura de busca
-            console.log('🔍 Verificando estrutura de busca (lists)...');
-            if (Array.isArray(data.data.lists)) {
-                items = data.data.lists;
-            } else if (Array.isArray(data.data)) {
-                data.data.forEach(section => {
-                    if (section.lists && Array.isArray(section.lists)) {
-                        items.push(...section.lists);
-                    }
-                });
-            }
-            console.log('✅ Items extraídos da busca:', items.length);
-        } else {
-            console.log('❌ Nenhum formato conhecido. Procurando arrays...');
-            
-            const findArrays = (obj, path = '') => {
-                if (!obj || typeof obj !== 'object') return;
-                
-                Object.keys(obj).forEach(key => {
-                    const fullPath = path ? `${path}.${key}` : key;
-                    const value = obj[key];
-                    
-                    if (Array.isArray(value)) {
-                        console.log(`🔍 Array encontrado em: ${fullPath} (${value.length} itens)`);
-                        if (value.length > 0) {
-                            console.log(`   Primeiro item:`, value[0]);
-                        }
-                    } else if (value && typeof value === 'object') {
-                        findArrays(value, fullPath);
-                    }
-                });
-            };
-            
-            findArrays(data);
+        // Se ainda não for array, define como vazio
+        if (!Array.isArray(items)) {
+            console.error('❌ Não foi possível encontrar array de itens');
+            items = [];
         }
         
-        console.log(`📺 Total de items extraídos: ${items.length}`);
+        console.log('📺 Itens encontrados:', items.length);
         
         if (items.length > 0) {
             console.log('📋 Primeiro item:', items[0]);
-            console.log('📋 Campos do primeiro item:', Object.keys(items[0]));
-            
             renderContent(items, currentOffset === 0);
             currentOffset += items.length;
             
             if (items.length < limit) {
                 hasMore = false;
                 showEndMessage(true);
-                console.log('🏁 Fim do conteúdo (menos de ' + limit + ' itens)');
             }
         } else {
-            console.log('❌ Nenhum item encontrado!');
+            console.log('❌ Nenhum item');
             hasMore = false;
             showEndMessage(true);
         }
         
-    } catch (error) {
-        console.error('❌ Erro ao carregar conteúdo:', error);
-        showError('Erro ao carregar conteúdo');
+    } catch (e) {
+        console.error('❌ Erro:', e);
+        showError('Erro ao carregar');
     } finally {
         isLoading = false;
         showLoading(false);
     }
 }
 
-function renderContent(items, clearExisting = false) {
-    console.log('🎨 renderContent - items:', items.length, 'clearExisting:', clearExisting);
-    
+function renderContent(items, clear) {
     const grid = document.getElementById('contentGrid');
+    if (!grid) return;
     
-    if (!grid) {
-        console.error('❌ Grid não encontrado!');
-        return;
-    }
+    if (clear) grid.innerHTML = '';
     
-    if (clearExisting) {
-        grid.innerHTML = '';
-    }
-    
-    let cardsCriados = 0;
-    items.forEach((item, index) => {
-        const card = createContentCard(item);
-        if (card) {
-            grid.appendChild(card);
-            cardsCriados++;
-        }
-        if (index < 3) {
-            console.log(`🎬 Card ${index}:`, item);
-        }
+    items.forEach(item => {
+        const card = createCard(item);
+        if (card) grid.appendChild(card);
     });
     
-    console.log(`✅ Grid atualizado: ${cardsCriados}/${items.length} cards criados`);
+    console.log('✅ Grid atualizado');
 }
 
-function createContentCard(item) {
-    // Tenta encontrar ID
-    const id = item.id || item.film_id || item.tv_id || item.content_id || item.movie_id;
-    // Tenta encontrar título
-    const title = item.title || item.film_name || item.tv_name || item.name || item.movie_title;
+function createCard(item) {
+    // 🔥 CORREÇÃO: campos exatos do APK
+    const id = item.id || item.film_id || item.tv_id;
+    const title = item.title || item.film_name || item.tv_name || item.name;
+    const thumb = item.thumb || item.cover || item.thumbnail || item.logo;
+    const year = item.year || item.release_year || item.published_year;
     
     if (!id) {
         console.warn('⚠️ Item sem ID:', item);
         return null;
-    }
-    
-    if (!title) {
-        console.warn('⚠️ Item sem título:', item);
     }
     
     const card = document.createElement('div');
@@ -403,27 +282,14 @@ function createContentCard(item) {
     card.dataset.id = id;
     card.dataset.title = title || 'Sem título';
     
-    // Tenta encontrar thumbnail
-    const thumbnail = item.thumb || item.cover || item.thumbnail || item.poster || item.image || item.logo || '';
-    // Tenta encontrar ano
-    const year = item.year || item.release_year || item.published_year || '';
-    
     card.innerHTML = `
         <div class="card-thumbnail">
-            ${thumbnail ? 
-                `<img src="${thumbnail}" alt="${title || ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">` : 
-                ''}
-            <i class="fas fa-film fallback-icon" style="${thumbnail ? 'display: none;' : ''}"></i>
+            ${thumb ? `<img src="${thumb}" alt="${title || ''}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">` : ''}
+            <i class="fas fa-film fallback-icon" style="${thumb ? 'display: none;' : ''}"></i>
         </div>
         <div class="card-info">
             <h3 class="card-title">${title || 'Sem título'}</h3>
-            ${year ? `
-                <div class="card-meta">
-                    <span class="card-year">
-                        <i class="fas fa-calendar"></i> ${year}
-                    </span>
-                </div>
-            ` : ''}
+            ${year ? `<div class="card-meta"><span class="card-year"><i class="fas fa-calendar"></i> ${year}</span></div>` : ''}
         </div>
     `;
     
@@ -432,32 +298,27 @@ function createContentCard(item) {
 
 // ============= PLAYER =============
 async function playMovie(id, title) {
-    console.log('🎬 playMovie:', title, 'ID:', id);
     try {
         showLoading(true);
+        const res = await fetch(`${API_BASE}/movie/${id}`);
+        const data = await res.json();
         
-        const response = await fetch(`${API_BASE}/movie/${id}`);
-        const data = await response.json();
+        console.log('🎬 Filme:', data);
         
-        console.log('📦 Detalhes do filme:', data);
+        const movie = data.data || data;
+        // 🔥 CORREÇÃO: media_url (APK)
+        let url = movie.media_url || movie.video_url || movie.url;
         
-        const movieData = data.data || data;
-        const videoUrl = movieData.media_url || movieData.video_url || '';
-        
-        if (videoUrl) {
-            let fixedUrl = videoUrl.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
-            if (!fixedUrl.startsWith('http://') && !fixedUrl.startsWith('https://')) {
-                fixedUrl = 'http://' + fixedUrl;
-            }
+        if (url) {
+            url = url.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
+            if (!url.startsWith('http')) url = 'http://' + url;
             
-            console.log('✅ URL do vídeo:', fixedUrl);
-            openPlayer(fixedUrl, title, movieData);
+            openPlayer(url, title, movie);
         } else {
-            console.error('❌ URL do vídeo não encontrada');
             alert('Vídeo não disponível');
         }
-    } catch (error) {
-        console.error('❌ Erro ao carregar filme:', error);
+    } catch (e) {
+        console.error('Erro:', e);
         alert('Erro ao carregar filme');
     } finally {
         showLoading(false);
@@ -465,31 +326,24 @@ async function playMovie(id, title) {
 }
 
 async function playTVChannel(id, title) {
-    console.log('📺 playTVChannel:', title, 'ID:', id);
     try {
         showLoading(true);
+        const res = await fetch(`${API_BASE}/tv/play/${id}`);
+        const data = await res.json();
         
-        const response = await fetch(`${API_BASE}/tv/play/${id}`);
-        const data = await response.json();
+        console.log('📺 Canal:', data);
         
-        console.log('📦 Detalhes do canal:', data);
+        const tv = data.data || data;
+        let url = tv.stream_url || tv.url || tv.media_url;
         
-        const tvData = data.data || data;
-        let streamUrl = tvData.stream_url || tvData.url || tvData.media_url || '';
-        
-        if (streamUrl) {
-            if (!streamUrl.startsWith('http://') && !streamUrl.startsWith('https://')) {
-                streamUrl = 'http://' + streamUrl;
-            }
-            
-            console.log('✅ URL do stream:', streamUrl);
-            openPlayer(streamUrl, title, { ...tvData, year: 'AO VIVO' });
+        if (url) {
+            if (!url.startsWith('http')) url = 'http://' + url;
+            openPlayer(url, title, { ...tv, year: 'AO VIVO' });
         } else {
-            console.error('❌ URL do stream não encontrada');
             alert('Canal não disponível');
         }
-    } catch (error) {
-        console.error('❌ Erro ao carregar canal:', error);
+    } catch (e) {
+        console.error('Erro:', e);
         alert('Erro ao carregar canal');
     } finally {
         showLoading(false);
@@ -497,9 +351,8 @@ async function playTVChannel(id, title) {
 }
 
 function openPlayer(url, title, details) {
-    console.log('▶️ Abrindo player:', title);
-    
-    document.getElementById('playerTitle').textContent = title;
+    const titleEl = document.getElementById('playerTitle');
+    if (titleEl) titleEl.textContent = title;
     
     if (player) {
         player.src({
@@ -508,68 +361,40 @@ function openPlayer(url, title, details) {
         });
     }
     
-    const infoContainer = document.getElementById('playerInfo');
-    
-    let infoHtml = '<div class="info-grid">';
-    
-    if (details.year) {
-        infoHtml += `
-            <div class="info-item">
-                <i class="fas fa-calendar"></i>
-                <span>${details.year}</span>
-            </div>
-        `;
+    const info = document.getElementById('playerInfo');
+    if (info) {
+        let html = '<div class="info-grid">';
+        if (details.year) html += `<div class="info-item"><i class="fas fa-calendar"></i><span>${details.year}</span></div>`;
+        if (details.duration) html += `<div class="info-item"><i class="fas fa-clock"></i><span>${details.duration}</span></div>`;
+        if (details.nation) html += `<div class="info-item"><i class="fas fa-globe"></i><span>${details.nation}</span></div>`;
+        html += '</div>';
+        if (details.description) {
+            html += `<div class="synopsis"><strong>Sinopse:</strong> ${details.description.replace(/<[^>]*>/g, '')}</div>`;
+        }
+        info.innerHTML = html || '<p>Sem informações</p>';
     }
     
-    if (details.duration) {
-        infoHtml += `
-            <div class="info-item">
-                <i class="fas fa-clock"></i>
-                <span>${details.duration}</span>
-            </div>
-        `;
-    }
-    
-    if (details.nation) {
-        infoHtml += `
-            <div class="info-item">
-                <i class="fas fa-globe"></i>
-                <span>${details.nation}</span>
-            </div>
-        `;
-    }
-    
-    infoHtml += '</div>';
-    
-    if (details.description) {
-        const desc = details.description.replace(/<[^>]*>/g, '');
-        infoHtml += `<div class="synopsis"><strong>Sinopse:</strong> ${desc}</div>`;
-    }
-    
-    infoContainer.innerHTML = infoHtml || '<p>Sem informações adicionais</p>';
-    
-    document.getElementById('playerModal').classList.add('active');
+    const modal = document.getElementById('playerModal');
+    if (modal) modal.classList.add('active');
 }
 
 function closePlayer() {
-    console.log('⏹️ Fechando player');
     if (player) {
         player.pause();
         player.reset();
     }
-    document.getElementById('playerModal').classList.remove('active');
+    const modal = document.getElementById('playerModal');
+    if (modal) modal.classList.remove('active');
 }
 
 // ============= BUSCA =============
 function performSearch(term) {
-    console.log('🔍 Buscando:', term);
     currentSearchTerm = term;
     resetAndReload();
 }
 
 // ============= UTILITÁRIOS =============
 function resetAndReload() {
-    console.log('🔄 Resetando e recarregando...');
     currentOffset = 0;
     hasMore = true;
     const grid = document.getElementById('contentGrid');
@@ -585,7 +410,6 @@ function handleScroll() {
     
     if (scrollTop + windowHeight >= documentHeight - 200) {
         if (!isLoading && hasMore && !currentSearchTerm) {
-            console.log('📜 Scroll infinito - carregando mais...');
             loadContent();
         }
     }
@@ -593,38 +417,22 @@ function handleScroll() {
 
 function showLoading(show) {
     const spinner = document.getElementById('loadingSpinner');
-    if (spinner) {
-        spinner.style.display = show ? 'flex' : 'none';
-        console.log('⏳ Loading:', show);
-    }
+    if (spinner) spinner.style.display = show ? 'flex' : 'none';
 }
 
 function showEndMessage(show) {
-    const endMessage = document.getElementById('endMessage');
-    if (endMessage) {
-        endMessage.style.display = show ? 'flex' : 'none';
-        console.log('🏁 End message:', show);
-    }
+    const msg = document.getElementById('endMessage');
+    if (msg) msg.style.display = show ? 'flex' : 'none';
 }
 
-function showError(message) {
-    console.error('❌ Erro exibido:', message);
+function showError(msg) {
     const grid = document.getElementById('contentGrid');
     if (grid) {
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.style.cssText = `
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        `;
-        errorDiv.innerHTML = `
-            <i class="fas fa-exclamation-triangle" style="color: var(--accent); font-size: 48px; margin-bottom: 20px;"></i>
-            <p>${message}</p>
-        `;
-        grid.appendChild(errorDiv);
+        const div = document.createElement('div');
+        div.style.cssText = 'grid-column:1/-1;text-align:center;padding:40px;color:#B0BEC5;';
+        div.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#E50914;font-size:48px;"></i><p>${msg}</p>`;
+        grid.appendChild(div);
     }
 }
 
-console.log('✅ Script MOVTV carregado!');
+console.log('✅ Script v2 carregado!');
