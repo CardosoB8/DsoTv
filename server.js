@@ -6,27 +6,17 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ============= CONFIGURAÇÕES EXATAS DO APK =============
 const API_BASE_URL = "http://api.movtv.co.mz";
 const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
-// 🔥 VALORES DO APK FUNCIONAL
 const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
-
-const commonParams = {
-    os: 'android',
-    language: 'pt',
-    msisdn: MSISDN,
-    did: DEVICE_ID,
-    clientType: 'Android',
-    revision: '173',
-    languageCode: 'pt',
-    countryCode: 'PT'
-};
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// ============= FUNÇÕES EXATAS DO APK =============
 function generateTimestamp() {
     const now = new Date();
     const year = now.getFullYear();
@@ -52,201 +42,200 @@ function fixVideoUrl(url) {
     return fixed;
 }
 
-async function callApi(endpoint, customParams = {}) {
+// ============= CHAMADA API EXATA DO APK =============
+async function callApi(endpoint, params = null) {
     const timestamp = generateTimestamp();
-    const hash = generateHash(timestamp);
+    const s_hash = generateHash(timestamp);
     
-    const allParams = { s: hash, t: timestamp, ...commonParams, ...customParams };
-    const queryString = Object.entries(allParams).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
-    const url = `${API_BASE_URL}/${endpoint}?${queryString}`;
+    // Constrói URL exatamente como no APK
+    let url = `${API_BASE_URL}/${endpoint}?`;
+    url += `s=${s_hash}`;
+    url += `&t=${timestamp}`;
+    url += `&os=android`;
+    url += `&language=pt`;
+    url += `&msisdn=${MSISDN}`;
+    url += `&did=${DEVICE_ID}`;
+    url += `&clientType=Android`;
+    url += `&revision=173`;
+    url += `&languageCode=pt`;
+    url += `&countryCode=PT`;
     
-    console.log(`🌐 API: ${endpoint}`);
+    if (params) {
+        url += `&${params}`;
+    }
     
-    // 🔥 MESMOS HEADERS DO APK
+    console.log(`🌐 ${endpoint}`);
+    
+    // Headers exatos do APK
     const response = await fetch(url, {
         headers: {
             'X-Api-Key': 'bigzun.com',
             'Device-Id': DEVICE_ID
-            // SEM User-Agent específico (igual ao APK)
-        },
-        signal: AbortSignal.timeout(30000)
+        }
     });
     
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-}
-
-// Cache
-const cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000;
-
-function getCached(key) {
-    const cached = cache.get(key);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-        return cached.data;
-    }
-    return null;
-}
-
-function setCached(key, data) {
-    cache.set(key, { data, timestamp: Date.now() });
+    const text = await response.text();
+    return JSON.parse(text);
 }
 
 // ============= ENDPOINTS =============
 
+// GET /api/filmes - EXATAMENTE como o APK faz loadMovies()
 app.get('/api/filmes', async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 50;
-        const offset = parseInt(req.query.offset) || 0;
+        const limit = req.query.limit || 50;
+        const offset = req.query.offset || 0;
+        const categoryId = req.query.category || '0';
         
-        const cacheKey = `filmes_${limit}_${offset}`;
-        const cached = getCached(cacheKey);
-        if (cached) return res.json(cached);
+        let endpoint, params;
         
-        const data = await callApi('partner/content/getAllFilms', { limit, offset });
+        if (categoryId === '0') {
+            endpoint = 'partner/content/getAllFilms';
+            params = `limit=${limit}&offset=${offset}`;
+        } else {
+            endpoint = 'partner/content/getFilmsByCategory';
+            params = `category_id=${categoryId}&limit=${limit}&offset=${offset}`;
+        }
         
-        // 🔥 Estrutura correta: data.data é o array
+        const data = await callApi(endpoint, params);
+        
+        // APK faz: JSONArray data = json.getJSONArray("data")
         const filmes = (data.data || []).map(item => ({
             id: item.id,
             titulo: item.title || 'Sem título',
-            thumb: item.thumb || ''
+            thumb: item.thumb || item.cover || ''
         }));
         
-        console.log(`✅ ${filmes.length} filmes`);
-        const result = { filmes };
-        setCached(cacheKey, result);
-        res.json(result);
-    } catch (error) {
-        console.error('❌ Erro filmes:', error.message);
-        res.status(500).json({ filmes: [] });
+        res.json({ filmes });
+    } catch (e) {
+        res.json({ filmes: [] });
     }
 });
 
+// GET /api/categorias - EXATAMENTE como o APK faz loadCategories()
 app.get('/api/categorias', async (req, res) => {
     try {
-        const cached = getCached('categorias');
-        if (cached) return res.json(cached);
+        const data = await callApi('partner/content/getFilmCategoryList', null);
         
-        const data = await callApi('partner/content/getFilmCategoryList');
-        
+        // APK faz: JSONArray data = json.getJSONArray("data")
         const categorias = (data.data || []).map(cat => ({
             id: cat.id,
-            nome: cat.name || cat.title || 'Sem nome'
+            nome: cat.name
         }));
         
-        console.log(`✅ ${categorias.length} categorias`);
-        const result = { categorias };
-        setCached('categorias', result);
-        res.json(result);
-    } catch (error) {
-        console.error('❌ Erro categorias:', error.message);
-        res.status(500).json({ categorias: [] });
+        res.json({ categorias });
+    } catch (e) {
+        res.json({ categorias: [] });
     }
 });
 
+// GET /api/canais - EXATAMENTE como o APK faz loadTVChannels()
 app.get('/api/canais', async (req, res) => {
     try {
-        const cached = getCached('canais');
-        if (cached) return res.json(cached);
+        const data = await callApi('partner/content/getAllTV', 'limit=200');
         
-        const data = await callApi('partner/content/getAllTV', { limit: 200 });
-        
+        // APK faz: JSONArray data = json.getJSONArray("data")
         const canais = (data.data || []).map(canal => ({
             id: canal.id,
-            titulo: canal.title || 'Sem nome',
-            thumb: canal.thumb || ''
+            titulo: canal.title,
+            thumb: canal.thumb || canal.logo || canal.cover || ''
         }));
         
-        console.log(`✅ ${canais.length} canais`);
-        const result = { canais };
-        setCached('canais', result);
-        res.json(result);
-    } catch (error) {
-        console.error('❌ Erro canais:', error.message);
-        res.status(500).json({ canais: [] });
+        res.json({ canais });
+    } catch (e) {
+        res.json({ canais: [] });
     }
 });
 
+// GET /api/filme/:id - EXATAMENTE como o APK faz playMovie()
 app.get('/api/filme/:id', async (req, res) => {
     try {
         const filmId = req.params.id;
-        const data = await callApi('partner/content/getFilmDetail', { film_id: filmId });
+        const data = await callApi('partner/content/getFilmDetail', `film_id=${filmId}`);
         
+        // APK faz: JSONObject data = json.getJSONObject("data")
         const raw = data.data || {};
-        const filme = {
-            id: raw.id || filmId,
-            titulo: raw.title || '',
-            thumb: raw.thumb || raw.cover || '',
-            ano: raw.year || raw.release_year || '',
-            videoUrl: fixVideoUrl(raw.media_url || raw.video_url || '')
-        };
         
-        res.json({ filme });
-    } catch (error) {
-        res.status(500).json({ filme: null });
+        let videoUrl = raw.media_url || '';
+        if (videoUrl) {
+            videoUrl = videoUrl.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
+            if (!videoUrl.startsWith('http')) videoUrl = 'http://' + videoUrl;
+        }
+        
+        res.json({
+            filme: {
+                id: raw.id || filmId,
+                titulo: raw.title || '',
+                thumb: raw.thumb || raw.cover || '',
+                ano: raw.year || raw.release_year || '',
+                duracao: raw.duration || '',
+                pais: raw.nation || '',
+                descricao: (raw.description || '').replace(/<[^>]*>/g, ''),
+                videoUrl: videoUrl
+            }
+        });
+    } catch (e) {
+        res.json({ filme: null });
     }
 });
 
+// GET /api/canal/:id - EXATAMENTE como o APK faz playTVChannel()
 app.get('/api/canal/:id', async (req, res) => {
     try {
         const tvId = req.params.id;
-        const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
+        const data = await callApi('partner/content/playTelevision', `tv_id=${tvId}`);
         
         const raw = data.data || {};
-        let videoUrl = raw.stream_url || raw.url || '';
+        let videoUrl = raw.stream_url || raw.url || raw.media_url || '';
         if (videoUrl && !videoUrl.startsWith('http')) {
             videoUrl = 'http://' + videoUrl;
         }
         
-        res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
-    } catch (error) {
-        res.status(500).json({ canal: null });
+        res.json({
+            canal: {
+                id: tvId,
+                titulo: raw.title || '',
+                videoUrl: videoUrl
+            }
+        });
+    } catch (e) {
+        res.json({ canal: null });
     }
 });
 
+// GET /api/buscar - EXATAMENTE como o APK faz performSearch()
 app.get('/api/buscar', async (req, res) => {
     try {
         const q = req.query.q || '';
         if (!q) return res.json({ filmes: [] });
         
-        const data = await callApi('app/search', { keyword: q, limit: 50 });
+        const data = await callApi('app/search', `keyword=${encodeURIComponent(q)}&limit=100`);
         
-        let filmes = [];
+        const filmes = [];
         const rawData = data.data || [];
         
-        if (Array.isArray(rawData)) {
-            rawData.forEach(section => {
-                const items = section.lists || [];
-                items.forEach(item => {
-                    if (item.id) {
-                        filmes.push({
-                            id: item.id,
-                            titulo: item.title || '',
-                            thumb: item.thumb || ''
-                        });
-                    }
-                });
-            });
+        // APK faz: percorre sections e lists
+        for (const section of rawData) {
+            if (section.lists) {
+                for (const item of section.lists) {
+                    filmes.push({
+                        id: item.id,
+                        titulo: item.title || '',
+                        thumb: item.thumb || item.cover || ''
+                    });
+                }
+            }
         }
         
         res.json({ filmes });
-    } catch (error) {
-        res.status(500).json({ filmes: [] });
+    } catch (e) {
+        res.json({ filmes: [] });
     }
 });
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of cache.entries()) {
-        if (now - value.timestamp > CACHE_TTL) {
-            cache.delete(key);
-        }
-    }
-}, 60000);
 
 if (process.env.VERCEL) {
     module.exports = app;
