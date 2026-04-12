@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MOVTV WEB PLAYER</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Video.js Player -->
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
+    
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Banner Topo -->
+    <div class="ad-container ad-top">
+        <div class="ad-placeholder">
+            <i class="fas fa-ad"></i> Publicidade - 728x90
+        </div>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-play-circle"></i>
+                <span>MOVTV</span>
+                <span class="logo-sub">WEB PLAYER</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-mode="movies">
+                    <i class="fas fa-film"></i> Filmes
+                </button>
+                <button class="nav-btn" data-mode="tv">
+                    <i class="fas fa-tv"></i> TV
+                </button>
+            </nav>
+            
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar filmes...">
+                <button class="search-clear" id="searchClear" style="display: none;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Categorias (modo filmes) -->
+    <div class="categories-container" id="categoriesContainer">
+        <div class="categories-wrapper">
+            <button class="category-btn active" data-category="all">
+                <i class="fas fa-star"></i> Todos
+            </button>
+            <!-- Categorias serão carregadas dinamicamente -->
+        </div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+        <!-- Grid de Conteúdo -->
+        <div class="content-grid" id="contentGrid">
+            <!-- Conteúdo carregado dinamicamente -->
+        </div>
+        
+        <!-- Banner Entre Conteúdo -->
+        <div class="ad-container ad-middle">
+            <div class="ad-placeholder">
+                <i class="fas fa-ad"></i> Publicidade - 468x60
+            </div>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Carregando...</span>
+        </div>
+        
+        <!-- Mensagem de Fim do Conteúdo -->
+        <div class="end-message" id="endMessage" style="display: none;">
+            <i class="fas fa-check-circle"></i>
+            <span>Você chegou ao fim!</span>
+        </div>
+    </main>
+
+    <!-- Banner Rodapé -->
+    <div class="ad-container ad-footer">
+        <div class="ad-placeholder">
+            <i class="fas fa-ad"></i> Publicidade - 728x90
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2024 MOVTV WEB PLAYER - Todos os direitos reservados</p>
+    </footer>
+
+    <!-- Modal do Player -->
+    <div class="player-modal" id="playerModal">
+        <div class="player-modal-content">
+            <div class="player-header">
+                <h2 id="playerTitle">Título do Vídeo</h2>
+                <button class="player-close" id="playerClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="player-container">
+                <video id="videoPlayer" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto">
+                    <p class="vjs-no-js">
+                        Para assistir este vídeo, habilite JavaScript e considere atualizar para um navegador que
+                        <a href="https://videojs.com/html5-video-support/" target="_blank">suporte vídeo HTML5</a>
+                    </p>
+                </video>
+            </div>
+            
+            <div class="player-info" id="playerInfo">
+                <!-- Informações do vídeo carregadas dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
