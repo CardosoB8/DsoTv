@@ -1,5 +1,5 @@
 // ============= CONFIGURAÇÕES GLOBAIS =============
-const API_BASE = 'http://dsotv.vercel.app/api';
+const API_BASE = '/api';
 let player = null;
 let currentMode = 'movies'; // 'movies' ou 'tv'
 let currentCategory = 'all';
