@@ -6,7 +6,6 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configurações da API MOVTV
 const API_BASE_URL = "http://api.movtv.co.mz";
 const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
 const MSISDN = "865446574";
@@ -24,15 +23,13 @@ const commonParams = {
     countryCode: 'PT'
 };
 
+// Cache simples (5 minutos)
+const cache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
-
-// Log de requisições
-app.use((req, res, next) => {
-    console.log(`📡 ${req.method} ${req.path}`);
-    next();
-});
 
 function generateTimestamp() {
     const now = new Date();
@@ -67,8 +64,6 @@ async function callApi(endpoint, customParams = {}) {
     const queryString = Object.entries(allParams).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
     const url = `${API_BASE_URL}/${endpoint}?${queryString}`;
     
-    console.log(`[API] ${endpoint}`);
-    
     const response = await fetch(url, {
         headers: {
             'User-Agent': USER_AGENT,
@@ -82,56 +77,63 @@ async function callApi(endpoint, customParams = {}) {
     return await response.json();
 }
 
-// ============= ENDPOINTS ORGANIZADOS =============
+// Cache
+function getCached(key) {
+    const cached = cache.get(key);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        return cached.data;
+    }
+    return null;
+}
 
-// GET /api/filmes - Retorna lista de filmes ORGANIZADA
+function setCached(key, data) {
+    cache.set(key, { data, timestamp: Date.now() });
+}
+
+// ============= ENDPOINTS =============
+
+// GET /api/filmes
 app.get('/api/filmes', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
         
+        const cacheKey = `filmes_${limit}_${offset}`;
+        const cached = getCached(cacheKey);
+        if (cached) return res.json(cached);
+        
         const data = await callApi('partner/content/getAllFilms', { limit, offset });
         
-        // 🔥 ORGANIZA OS DADOS AQUI!
-        let filmes = [];
-        const rawData = data.data || data || [];
+        const filmes = (data.data || []).map(item => ({
+            id: item.id,
+            titulo: item.title || 'Sem título',
+            thumb: item.thumb || ''
+        }));
         
-        if (Array.isArray(rawData)) {
-            filmes = rawData.map(item => ({
-                id: item.id || item.film_id || '',
-                titulo: item.title || item.film_name || item.name || 'Sem título',
-                thumb: item.thumb || item.cover || item.thumbnail || '',
-                ano: item.year || item.release_year || item.published_year || ''
-            }));
-        }
-        
-        console.log(`✅ ${filmes.length} filmes organizados`);
-        res.json({ filmes, total: filmes.length });
-        
+        const result = { filmes };
+        setCached(cacheKey, result);
+        res.json(result);
     } catch (error) {
-        console.error('❌ Erro filmes:', error.message);
-        res.status(500).json({ filmes: [], erro: error.message });
+        res.status(500).json({ filmes: [] });
     }
 });
 
-// GET /api/categorias - Lista de categorias ORGANIZADA
+// GET /api/categorias
 app.get('/api/categorias', async (req, res) => {
     try {
+        const cached = getCached('categorias');
+        if (cached) return res.json(cached);
+        
         const data = await callApi('partner/content/getFilmCategoryList');
         
-        let categorias = [];
-        const rawData = data.data || data || [];
+        const categorias = (data.data || []).map(cat => ({
+            id: cat.id,
+            nome: cat.name || cat.title || 'Sem nome'
+        }));
         
-        if (Array.isArray(rawData)) {
-            categorias = rawData.map(cat => ({
-                id: cat.id || cat.category_id || '',
-                nome: cat.name || cat.category_name || cat.title || 'Sem nome'
-            }));
-        }
-        
-        console.log(`✅ ${categorias.length} categorias organizadas`);
-        res.json({ categorias });
-        
+        const result = { categorias };
+        setCached('categorias', result);
+        res.json(result);
     } catch (error) {
         res.status(500).json({ categorias: [] });
     }
@@ -148,57 +150,48 @@ app.get('/api/filmes/categoria/:id', async (req, res) => {
             category_id: categoryId, limit, offset 
         });
         
-        let filmes = [];
-        const rawData = data.data || data || [];
-        
-        if (Array.isArray(rawData)) {
-            filmes = rawData.map(item => ({
-                id: item.id || item.film_id || '',
-                titulo: item.title || item.film_name || item.name || 'Sem título',
-                thumb: item.thumb || item.cover || '',
-                ano: item.year || item.release_year || ''
-            }));
-        }
+        const filmes = (data.data || []).map(item => ({
+            id: item.id,
+            titulo: item.title || 'Sem título',
+            thumb: item.thumb || ''
+        }));
         
         res.json({ filmes });
-        
     } catch (error) {
         res.status(500).json({ filmes: [] });
     }
 });
 
-// GET /api/canais - Lista de canais TV ORGANIZADA
+// GET /api/canais
 app.get('/api/canais', async (req, res) => {
     try {
+        const cached = getCached('canais');
+        if (cached) return res.json(cached);
+        
         const data = await callApi('partner/content/getAllTV', { limit: 200 });
         
-        let canais = [];
-        const rawData = data.data || data || [];
+        const canais = (data.data || []).map(canal => ({
+            id: canal.id,
+            titulo: canal.title || 'Sem nome',
+            thumb: canal.thumb || '',
+            original_id: canal.original_id
+        }));
         
-        if (Array.isArray(rawData)) {
-            canais = rawData.map(canal => ({
-                id: canal.id || canal.tv_id || '',
-                titulo: canal.title || canal.tv_name || canal.name || 'Sem nome',
-                thumb: canal.thumb || canal.logo || canal.cover || '',
-                aoVivo: true
-            }));
-        }
-        
-        console.log(`✅ ${canais.length} canais organizados`);
-        res.json({ canais });
-        
+        const result = { canais };
+        setCached('canais', result);
+        res.json(result);
     } catch (error) {
         res.status(500).json({ canais: [] });
     }
 });
 
-// GET /api/filme/:id - Detalhes do filme
+// GET /api/filme/:id
 app.get('/api/filme/:id', async (req, res) => {
     try {
         const filmId = req.params.id;
         const data = await callApi('partner/content/getFilmDetail', { film_id: filmId });
         
-        const raw = data.data || data;
+        const raw = data.data || {};
         
         const filme = {
             id: raw.id || filmId,
@@ -211,39 +204,37 @@ app.get('/api/filme/:id', async (req, res) => {
             videoUrl: fixVideoUrl(raw.media_url || raw.video_url || raw.url || '')
         };
         
-        console.log(`✅ Filme: ${filme.titulo} | Video: ${filme.videoUrl ? 'SIM' : 'NÃO'}`);
         res.json({ filme });
-        
     } catch (error) {
         res.status(500).json({ filme: null });
     }
 });
 
-// GET /api/canal/:id - Stream do canal
+// GET /api/canal/:id
 app.get('/api/canal/:id', async (req, res) => {
     try {
         const tvId = req.params.id;
         const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
         
-        const raw = data.data || data;
-        let url = raw.stream_url || raw.url || raw.media_url || '';
-        if (url && !url.startsWith('http')) url = 'http://' + url;
+        const raw = data.data || {};
+        let videoUrl = raw.stream_url || raw.url || '';
+        if (videoUrl && !videoUrl.startsWith('http')) {
+            videoUrl = 'http://' + videoUrl;
+        }
         
         const canal = {
             id: tvId,
             titulo: raw.title || '',
-            videoUrl: url
+            videoUrl: videoUrl
         };
         
-        console.log(`✅ Canal: ${canal.titulo} | Stream: ${canal.videoUrl ? 'SIM' : 'NÃO'}`);
         res.json({ canal });
-        
     } catch (error) {
         res.status(500).json({ canal: null });
     }
 });
 
-// GET /api/buscar - Busca
+// GET /api/buscar
 app.get('/api/buscar', async (req, res) => {
     try {
         const q = req.query.q || '';
@@ -252,42 +243,50 @@ app.get('/api/buscar', async (req, res) => {
         const data = await callApi('app/search', { keyword: q, limit: 50 });
         
         let filmes = [];
-        const rawData = data.data || data || [];
+        const rawData = data.data || [];
         
         if (Array.isArray(rawData)) {
             rawData.forEach(section => {
-                if (section.lists && Array.isArray(section.lists)) {
-                    section.lists.forEach(item => {
-                        filmes.push({
-                            id: item.id || item.film_id || '',
-                            titulo: item.title || item.film_name || item.name || '',
-                            thumb: item.thumb || item.cover || '',
-                            ano: item.year || ''
-                        });
+                const items = section.lists || section.items || [section];
+                if (Array.isArray(items)) {
+                    items.forEach(item => {
+                        if (item.id) {
+                            filmes.push({
+                                id: item.id,
+                                titulo: item.title || item.film_name || '',
+                                thumb: item.thumb || item.cover || '',
+                                ano: item.year || ''
+                            });
+                        }
                     });
                 }
             });
         }
         
-        console.log(`🔍 Busca "${q}": ${filmes.length} resultados`);
         res.json({ filmes });
-        
     } catch (error) {
         res.status(500).json({ filmes: [] });
     }
 });
 
-// Rota principal - serve o HTML
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Exportar para Vercel ou iniciar
+// Limpeza de cache
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of cache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+            cache.delete(key);
+        }
+    }
+}, 60000);
+
 if (process.env.VERCEL) {
     module.exports = app;
 } else {
     app.listen(PORT, () => {
-        console.log(`\n🚀 SERVIDOR RODANDO NA PORTA ${PORT}\n`);
-        console.log(`📡 http://localhost:${PORT}\n`);
+        console.log(`\n🚀 DSO TV rodando em http://localhost:${PORT}\n`);
     });
 }
