@@ -15,7 +15,7 @@
         .nav button { background: none; border: none; color: #B0BEC5; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
         .nav button.active { background: #E50914; color: #fff; }
         .search { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; }
-        .search input { background: none; border: none; color: #fff; outline: none; }
+        .search input { background: none; border: none; color: #fff; outline: none; width: 150px; }
         .categorias { padding: 12px; display: flex; gap: 8px; overflow-x: auto; }
         .categoria { background: #1A2D42; border: none; color: #B0BEC5; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
         .categoria.active { background: #E50914; color: #fff; }
@@ -23,8 +23,7 @@
         .card { background: #1A2D42; border-radius: 12px; overflow: hidden; cursor: pointer; }
         .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; background: #0a1520; }
         .card .info { padding: 10px; }
-        .card .titulo { font-size: 13px; font-weight: bold; margin-bottom: 4px; }
-        .card .ano { font-size: 11px; color: #B0BEC5; }
+        .card .titulo { font-size: 13px; font-weight: bold; }
         .loading { text-align: center; padding: 40px; color: #B0BEC5; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
         .modal.active { display: flex; align-items: center; justify-content: center; }
@@ -33,8 +32,6 @@
         .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
         .video-container { aspect-ratio: 16/9; background: #000; }
         .status { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 8px; font-size: 12px; text-align: center; }
-        .status.error { background: #E50914; }
-        .status.success { background: #2ecc71; }
     </style>
 </head>
 <body>
@@ -74,7 +71,6 @@
 
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
     <script>
-        // ============= CONFIG =============
         let modo = 'filmes';
         let categoria = 'all';
         let offset = 0;
@@ -82,19 +78,13 @@
         let temMais = true;
         let player = null;
         
-        function setStatus(msg, tipo) {
-            const el = document.getElementById('status');
-            el.textContent = msg;
-            el.className = 'status';
-            if (tipo === 'error') el.classList.add('error');
-            if (tipo === 'success') el.classList.add('success');
+        function setStatus(msg) {
+            document.getElementById('status').textContent = msg;
         }
         
-        // ============= INIT =============
         document.addEventListener('DOMContentLoaded', () => {
             player = videojs('player');
             
-            // Navegação
             document.querySelectorAll('.nav button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     modo = btn.dataset.mode;
@@ -105,7 +95,6 @@
                 });
             });
             
-            // Categorias
             document.getElementById('categorias').addEventListener('click', e => {
                 const btn = e.target.closest('.categoria');
                 if (btn) {
@@ -116,27 +105,21 @@
                 }
             });
             
-            // Busca
             let timeout;
             document.getElementById('busca').addEventListener('input', e => {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => {
-                    if (e.target.value) {
-                        buscar(e.target.value);
-                    } else {
-                        resetar();
-                    }
+                    if (e.target.value) buscar(e.target.value);
+                    else resetar();
                 }, 500);
             });
             
-            // Scroll
             window.addEventListener('scroll', () => {
                 if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-                    if (!carregando && temMais) carregar();
+                    if (!carregando && temMais && modo === 'filmes') carregar();
                 }
             });
             
-            // Modal
             document.getElementById('modalClose').addEventListener('click', () => {
                 player.pause();
                 document.getElementById('modal').classList.remove('active');
@@ -144,21 +127,19 @@
             
             document.getElementById('grid').addEventListener('click', e => {
                 const card = e.target.closest('.card');
-                if (card) abrirPlayer(card.dataset.id, card.dataset.titulo);
+                if (card) abrir(card.dataset.id, card.dataset.titulo);
             });
             
-            // Iniciar
             carregarCategorias();
             carregar();
         });
         
-        // ============= API =============
         async function carregarCategorias() {
             try {
                 const res = await fetch('/api/categorias');
                 const data = await res.json();
                 
-                if (data.categorias && data.categorias.length) {
+                if (data.categorias) {
                     const container = document.getElementById('categorias');
                     const allBtn = container.querySelector('[data-cat="all"]');
                     container.innerHTML = '';
@@ -171,12 +152,8 @@
                         btn.innerHTML = `<i class="fas fa-folder"></i> ${cat.nome}`;
                         container.appendChild(btn);
                     });
-                    
-                    setStatus(`✅ ${data.categorias.length} categorias`, 'success');
                 }
-            } catch (e) {
-                setStatus('❌ Erro nas categorias', 'error');
-            }
+            } catch (e) {}
         }
         
         async function carregar() {
@@ -184,26 +161,20 @@
             
             carregando = true;
             document.getElementById('loading').style.display = 'block';
-            setStatus('⏳ Carregando...');
+            setStatus('Carregando...');
             
             try {
-                let url;
-                if (modo === 'filmes') {
-                    if (categoria === 'all') {
-                        url = `/api/filmes?limit=50&offset=${offset}`;
-                    } else {
-                        url = `/api/filmes/categoria/${categoria}?limit=50&offset=${offset}`;
-                    }
-                } else {
-                    url = '/api/canais';
-                }
+                let url = modo === 'filmes' 
+                    ? (categoria === 'all' 
+                        ? `/api/filmes?limit=50&offset=${offset}` 
+                        : `/api/filmes/categoria/${categoria}?limit=50&offset=${offset}`)
+                    : '/api/canais';
                 
                 const res = await fetch(url);
                 const data = await res.json();
-                
                 const itens = data.filmes || data.canais || [];
                 
-                setStatus(`📺 ${itens.length} itens carregados`, 'success');
+                setStatus(`${itens.length} itens`);
                 
                 if (itens.length) {
                     renderizar(itens, offset === 0);
@@ -211,11 +182,9 @@
                     if (itens.length < 50) temMais = false;
                 } else {
                     temMais = false;
-                    setStatus('🏁 Fim do conteúdo');
                 }
-                
             } catch (e) {
-                setStatus('❌ Erro ao carregar', 'error');
+                setStatus('Erro');
             } finally {
                 carregando = false;
                 document.getElementById('loading').style.display = 'none';
@@ -223,59 +192,35 @@
         }
         
         async function buscar(termo) {
-            setStatus(`🔍 Buscando: ${termo}`);
+            setStatus(`Buscando: ${termo}`);
             document.getElementById('grid').innerHTML = '';
             
             try {
                 const res = await fetch(`/api/buscar?q=${encodeURIComponent(termo)}`);
                 const data = await res.json();
-                
-                if (data.filmes && data.filmes.length) {
-                    renderizar(data.filmes, true);
-                    setStatus(`✅ ${data.filmes.length} resultados`, 'success');
-                } else {
-                    setStatus('❌ Nenhum resultado', 'error');
-                }
-            } catch (e) {
-                setStatus('❌ Erro na busca', 'error');
-            }
+                if (data.filmes) renderizar(data.filmes, true);
+            } catch (e) {}
         }
         
-        async function abrirPlayer(id, titulo) {
-            setStatus(`▶️ Abrindo: ${titulo}`);
+        async function abrir(id, titulo) {
+            setStatus(`Abrindo: ${titulo}`);
             
             try {
                 const url = modo === 'filmes' ? `/api/filme/${id}` : `/api/canal/${id}`;
                 const res = await fetch(url);
                 const data = await res.json();
-                
                 const item = data.filme || data.canal;
                 
                 if (item && item.videoUrl) {
                     document.getElementById('modalTitulo').textContent = item.titulo || titulo;
-                    
-                    let info = '';
-                    if (item.ano) info += `<span><i class="fas fa-calendar"></i> ${item.ano}</span> `;
-                    if (item.duracao) info += `<span><i class="fas fa-clock"></i> ${item.duracao}</span> `;
-                    if (item.pais) info += `<span><i class="fas fa-globe"></i> ${item.pais}</span> `;
-                    if (item.aoVivo) info = '<span style="color:#39FF14;"><i class="fas fa-circle"></i> AO VIVO</span>';
-                    if (item.descricao) info += `<p style="margin-top:10px;">${item.descricao.substring(0, 200)}...</p>`;
-                    
-                    document.getElementById('modalInfo').innerHTML = info || '';
-                    
-                    player.src({
-                        src: item.videoUrl,
-                        type: item.videoUrl.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4'
-                    });
-                    
+                    document.getElementById('modalInfo').innerHTML = item.descricao || (item.ano ? `Ano: ${item.ano}` : 'AO VIVO');
+                    player.src({ src: item.videoUrl, type: item.videoUrl.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' });
                     document.getElementById('modal').classList.add('active');
-                    setStatus(`✅ Reproduzindo: ${item.titulo}`, 'success');
                 } else {
-                    setStatus('❌ Vídeo não disponível', 'error');
                     alert('Vídeo não disponível');
                 }
             } catch (e) {
-                setStatus('❌ Erro ao abrir', 'error');
+                alert('Erro ao abrir');
             }
         }
         
@@ -288,16 +233,10 @@
                 card.className = 'card';
                 card.dataset.id = item.id;
                 card.dataset.titulo = item.titulo;
-                
                 card.innerHTML = `
                     ${item.thumb ? `<img src="${item.thumb}" onerror="this.style.display='none'">` : ''}
-                    <div class="info">
-                        <div class="titulo">${item.titulo || 'Sem título'}</div>
-                        ${item.ano ? `<div class="ano"><i class="fas fa-calendar"></i> ${item.ano}</div>` : ''}
-                        ${item.aoVivo ? '<div class="ano" style="color:#39FF14;"><i class="fas fa-circle"></i> AO VIVO</div>' : ''}
-                    </div>
+                    <div class="info"><div class="titulo">${item.titulo || ''}</div></div>
                 `;
-                
                 grid.appendChild(card);
             });
         }
