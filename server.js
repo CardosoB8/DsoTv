@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Configurações da API MOVTV
 const API_BASE_URL = "http://api.movtv.co.mz";
@@ -13,7 +13,7 @@ const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36";
 
-// Parâmetros comuns para todas as requisições
+// Parâmetros comuns
 const commonParams = {
     os: 'android',
     language: 'pt',
@@ -27,14 +27,20 @@ const commonParams = {
 
 // Cache simples (5 minutos)
 const cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos em ms
+const CACHE_TTL = 5 * 60 * 1000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Função para gerar timestamp no formato exigido
+// Log de requisições
+app.use((req, res, next) => {
+    console.log(`📡 ${req.method} ${req.path}`);
+    next();
+});
+
+// Funções auxiliares
 function generateTimestamp() {
     const now = new Date();
     const year = now.getFullYear();
@@ -46,13 +52,11 @@ function generateTimestamp() {
     return `${year}${month}${day}${hours}${minutes}${seconds}`;
 }
 
-// Função para gerar hash SHA256
 function generateHash(timestamp) {
     const hashString = `${timestamp}|${SECRET}|${MSISDN}|${DEVICE_ID}|android`;
     return crypto.createHash('sha256').update(hashString).digest('hex');
 }
 
-// Função para corrigir URL do vídeo
 function fixVideoUrl(originalUrl) {
     if (!originalUrl) return '';
     let fixed = originalUrl.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
@@ -62,7 +66,6 @@ function fixVideoUrl(originalUrl) {
     return fixed;
 }
 
-// Função para chamar a API
 async function callApi(endpoint, customParams = {}) {
     const timestamp = generateTimestamp();
     const hash = generateHash(timestamp);
@@ -80,19 +83,20 @@ async function callApi(endpoint, customParams = {}) {
     
     const url = `${API_BASE_URL}/${endpoint}?${queryString}`;
     
-    console.log(`[API] Chamando: ${endpoint}`);
+    console.log(`[API] ${endpoint}`);
     
     try {
         const response = await fetch(url, {
             headers: {
                 'User-Agent': USER_AGENT,
                 'X-Api-Key': 'bigzun.com',
-                'Device-Id': DEVICE_ID
-        },
-        signal: AbortSignal.timeout(30000) // Timeout 30 segundos
-    });
-    
-    if (!response.ok) {
+                'Device-Id': DEVICE_ID,
+                'Accept': 'application/json'
+            },
+            signal: AbortSignal.timeout(30000)
+        });
+        
+        if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
@@ -104,7 +108,6 @@ async function callApi(endpoint, customParams = {}) {
     }
 }
 
-// Função auxiliar para cache
 function getCached(key) {
     const cached = cache.get(key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -115,171 +118,150 @@ function getCached(key) {
 }
 
 function setCached(key, data) {
-    cache.set(key, {
-        data,
-        timestamp: Date.now()
-    });
+    cache.set(key, { data, timestamp: Date.now() });
     console.log(`[Cache] Set: ${key}`);
 }
 
 // ============= ENDPOINTS =============
 
-// 1. Listar categorias de filmes
 app.get('/api/categories', async (req, res) => {
     try {
         const cacheKey = 'categories';
-        const cached = getCached(cacheKey);
-        if (cached) {
-            return res.json(cached);
-        }
+        let cached = getCached(cacheKey);
+        if (cached) return res.json(cached);
         
         const data = await callApi('partner/content/getFilmCategoryList');
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao carregar categorias', details: error.message });
+        res.status(500).json({ error: 'Erro ao carregar categorias' });
     }
 });
 
-// 2. Listar filmes (com paginação)
 app.get('/api/movies', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
         
         const cacheKey = `movies_${limit}_${offset}`;
-        const cached = getCached(cacheKey);
-        if (cached) {
-            return res.json(cached);
-        }
+        let cached = getCached(cacheKey);
+        if (cached) return res.json(cached);
         
         const data = await callApi('partner/content/getAllFilms', { limit, offset });
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao carregar filmes', details: error.message });
+        res.status(500).json({ error: 'Erro ao carregar filmes' });
     }
 });
 
-// 3. Filmes por categoria
 app.get('/api/movies/category/:id', async (req, res) => {
     try {
         const categoryId = req.params.id;
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
         
-        const cacheKey = `category_${categoryId}_${limit}_${offset}`;
-        const cached = getCached(cacheKey);
-        if (cached) {
-            return res.json(cached);
-        }
-        
         const data = await callApi('partner/content/getFilmsByCategory', { 
-            category_id: categoryId,
-            limit, 
-            offset 
+            category_id: categoryId, limit, offset 
         });
-        setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao carregar filmes da categoria', details: error.message });
+        res.status(500).json({ error: 'Erro ao carregar categoria' });
     }
 });
 
-// 4. Detalhes do filme
 app.get('/api/movie/:id', async (req, res) => {
     try {
         const filmId = req.params.id;
-        
         const data = await callApi('partner/content/getFilmDetail', { film_id: filmId });
         
-        // Corrigir URLs de vídeo se existirem
-        if (data.data && data.data.video_url) {
-            data.data.video_url = fixVideoUrl(data.data.video_url);
+        // 🔥 CORREÇÃO: media_url (APK)
+        if (data.data) {
+            if (data.data.media_url) {
+                data.data.media_url = fixVideoUrl(data.data.media_url);
+            }
+            if (data.data.video_url) {
+                data.data.video_url = fixVideoUrl(data.data.video_url);
+            }
         }
         
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao carregar detalhes do filme', details: error.message });
+        res.status(500).json({ error: 'Erro ao carregar filme' });
     }
 });
 
-// 5. Listar canais de TV
 app.get('/api/tv', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 200;
         const offset = parseInt(req.query.offset) || 0;
         
         const cacheKey = `tv_${limit}_${offset}`;
-        const cached = getCached(cacheKey);
-        if (cached) {
-            return res.json(cached);
-        }
+        let cached = getCached(cacheKey);
+        if (cached) return res.json(cached);
         
         const data = await callApi('partner/content/getAllTV', { limit, offset });
         setCached(cacheKey, data);
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao carregar canais', details: error.message });
+        res.status(500).json({ error: 'Erro ao carregar TV' });
     }
 });
 
-// 6. Obter URL do canal
 app.get('/api/tv/play/:id', async (req, res) => {
     try {
         const tvId = req.params.id;
-        
         const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
         
-        // Corrigir URL do stream
         if (data.data && data.data.stream_url) {
             data.data.stream_url = fixVideoUrl(data.data.stream_url);
         }
         
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao carregar stream do canal', details: error.message });
+        res.status(500).json({ error: 'Erro ao carregar stream' });
     }
 });
 
-// 7. Buscar filmes
 app.get('/api/search', async (req, res) => {
     try {
         const keyword = req.query.q || '';
         const limit = parseInt(req.query.limit) || 100;
         
-        if (!keyword) {
-            return res.json({ data: [] });
-        }
+        if (!keyword) return res.json({ data: [] });
         
         const data = await callApi('app/search', { keyword, limit });
         res.json(data);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao realizar busca', details: error.message });
+        res.status(500).json({ error: 'Erro na busca' });
     }
 });
 
-// Limpar cache periodicamente (a cada 10 minutos)
+// Rota catch-all para SPA
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Exportar para Vercel ou iniciar servidor
+if (process.env.VERCEL) {
+    module.exports = app;
+} else {
+    app.listen(PORT, () => {
+        console.log(`
+        ╔══════════════════════════════════════════╗
+        ║   🎬 MOVTV WEB PLAYER                    ║
+        ║   📡 http://localhost:${PORT}              ║
+        ╚══════════════════════════════════════════╝
+        `);
+    });
+}
+
+// Limpeza de cache
 setInterval(() => {
     const now = Date.now();
     for (const [key, value] of cache.entries()) {
         if (now - value.timestamp > CACHE_TTL) {
             cache.delete(key);
-            console.log(`[Cache] Expired: ${key}`);
         }
     }
-}, 60000); // Verifica a cada minuto
-
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`
-    ╔══════════════════════════════════════════════════════════╗
-    ║                                                          ║
-    ║   🎬 MOVTV WEB PLAYER - Servidor iniciado!              ║
-    ║                                                          ║
-    ║   📡 Acesse: http://localhost:${PORT}                      ║
-    ║   🎮 API Proxy: http://localhost:${PORT}/api              ║
-    ║                                                          ║
-    ╚══════════════════════════════════════════════════════════╝
-    `);
-});
+}, 60000);
