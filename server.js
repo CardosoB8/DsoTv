@@ -23,7 +23,6 @@ const commonParams = {
     countryCode: 'PT'
 };
 
-// Cache simples (5 minutos)
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -64,6 +63,12 @@ async function callApi(endpoint, customParams = {}) {
     const queryString = Object.entries(allParams).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
     const url = `${API_BASE_URL}/${endpoint}?${queryString}`;
     
+    console.log('\n═══════════════════════════════════════');
+    console.log(`📤 REQUISIÇÃO PARA API MOVTV`);
+    console.log(`📍 Endpoint: ${endpoint}`);
+    console.log(`🔗 URL: ${url.substring(0, 200)}...`);
+    console.log(`📋 Params:`, customParams);
+    
     const response = await fetch(url, {
         headers: {
             'User-Agent': USER_AGENT,
@@ -74,33 +79,49 @@ async function callApi(endpoint, customParams = {}) {
     });
     
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
+    const data = await response.json();
+    
+    console.log(`📥 RESPOSTA DA API MOVTV`);
+    console.log(`✅ Code: ${data.code}, Message: ${data.message}`);
+    console.log(`📦 data é array? ${Array.isArray(data.data)}`);
+    console.log(`📦 data tamanho: ${Array.isArray(data.data) ? data.data.length : 'N/A'}`);
+    if (Array.isArray(data.data) && data.data.length > 0) {
+        console.log(`📋 Primeiro item:`, JSON.stringify(data.data[0]).substring(0, 300));
+    }
+    console.log('═══════════════════════════════════════\n');
+    
+    return data;
 }
 
-// Cache
 function getCached(key) {
     const cached = cache.get(key);
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        console.log(`💾 Cache HIT: ${key}`);
         return cached.data;
     }
+    console.log(`💾 Cache MISS: ${key}`);
     return null;
 }
 
 function setCached(key, data) {
     cache.set(key, { data, timestamp: Date.now() });
+    console.log(`💾 Cache SET: ${key}`);
 }
 
 // ============= ENDPOINTS =============
 
-// GET /api/filmes
 app.get('/api/filmes', async (req, res) => {
+    console.log(`\n🎬 [FRONTEND] GET /api/filmes - limit=${req.query.limit}, offset=${req.query.offset}`);
     try {
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
         
         const cacheKey = `filmes_${limit}_${offset}`;
         const cached = getCached(cacheKey);
-        if (cached) return res.json(cached);
+        if (cached) {
+            console.log(`📤 [FRONTEND] Respondendo com cache`);
+            return res.json(cached);
+        }
         
         const data = await callApi('partner/content/getAllFilms', { limit, offset });
         
@@ -110,16 +131,18 @@ app.get('/api/filmes', async (req, res) => {
             thumb: item.thumb || ''
         }));
         
+        console.log(`📤 [FRONTEND] Respondendo com ${filmes.length} filmes`);
         const result = { filmes };
         setCached(cacheKey, result);
         res.json(result);
     } catch (error) {
+        console.error(`❌ [FRONTEND] Erro:`, error.message);
         res.status(500).json({ filmes: [] });
     }
 });
 
-// GET /api/categorias
 app.get('/api/categorias', async (req, res) => {
+    console.log(`\n📁 [FRONTEND] GET /api/categorias`);
     try {
         const cached = getCached('categorias');
         if (cached) return res.json(cached);
@@ -131,16 +154,18 @@ app.get('/api/categorias', async (req, res) => {
             nome: cat.name || cat.title || 'Sem nome'
         }));
         
+        console.log(`📤 [FRONTEND] Respondendo com ${categorias.length} categorias`);
         const result = { categorias };
         setCached('categorias', result);
         res.json(result);
     } catch (error) {
+        console.error(`❌ [FRONTEND] Erro:`, error.message);
         res.status(500).json({ categorias: [] });
     }
 });
 
-// GET /api/filmes/categoria/:id
 app.get('/api/filmes/categoria/:id', async (req, res) => {
+    console.log(`\n📂 [FRONTEND] GET /api/filmes/categoria/${req.params.id}`);
     try {
         const categoryId = req.params.id;
         const limit = parseInt(req.query.limit) || 50;
@@ -156,14 +181,16 @@ app.get('/api/filmes/categoria/:id', async (req, res) => {
             thumb: item.thumb || ''
         }));
         
+        console.log(`📤 [FRONTEND] Respondendo com ${filmes.length} filmes`);
         res.json({ filmes });
     } catch (error) {
+        console.error(`❌ [FRONTEND] Erro:`, error.message);
         res.status(500).json({ filmes: [] });
     }
 });
 
-// GET /api/canais
 app.get('/api/canais', async (req, res) => {
+    console.log(`\n📺 [FRONTEND] GET /api/canais`);
     try {
         const cached = getCached('canais');
         if (cached) return res.json(cached);
@@ -173,25 +200,29 @@ app.get('/api/canais', async (req, res) => {
         const canais = (data.data || []).map(canal => ({
             id: canal.id,
             titulo: canal.title || 'Sem nome',
-            thumb: canal.thumb || '',
-            original_id: canal.original_id
+            thumb: canal.thumb || ''
         }));
         
+        console.log(`📤 [FRONTEND] Respondendo com ${canais.length} canais`);
         const result = { canais };
         setCached('canais', result);
         res.json(result);
     } catch (error) {
+        console.error(`❌ [FRONTEND] Erro:`, error.message);
         res.status(500).json({ canais: [] });
     }
 });
 
-// GET /api/filme/:id
 app.get('/api/filme/:id', async (req, res) => {
+    console.log(`\n🎬 [FRONTEND] GET /api/filme/${req.params.id}`);
     try {
         const filmId = req.params.id;
         const data = await callApi('partner/content/getFilmDetail', { film_id: filmId });
         
         const raw = data.data || {};
+        
+        const videoUrl = fixVideoUrl(raw.media_url || raw.video_url || raw.url || '');
+        console.log(`🎥 Video URL: ${videoUrl ? videoUrl.substring(0, 80) + '...' : 'NÃO ENCONTRADO'}`);
         
         const filme = {
             id: raw.id || filmId,
@@ -201,17 +232,19 @@ app.get('/api/filme/:id', async (req, res) => {
             duracao: raw.duration || '',
             pais: raw.nation || raw.country || '',
             descricao: (raw.description || '').replace(/<[^>]*>/g, ''),
-            videoUrl: fixVideoUrl(raw.media_url || raw.video_url || raw.url || '')
+            videoUrl: videoUrl
         };
         
+        console.log(`📤 [FRONTEND] Respondendo filme: ${filme.titulo}`);
         res.json({ filme });
     } catch (error) {
+        console.error(`❌ [FRONTEND] Erro:`, error.message);
         res.status(500).json({ filme: null });
     }
 });
 
-// GET /api/canal/:id
 app.get('/api/canal/:id', async (req, res) => {
+    console.log(`\n📺 [FRONTEND] GET /api/canal/${req.params.id}`);
     try {
         const tvId = req.params.id;
         const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
@@ -222,20 +255,24 @@ app.get('/api/canal/:id', async (req, res) => {
             videoUrl = 'http://' + videoUrl;
         }
         
+        console.log(`🎥 Stream URL: ${videoUrl ? videoUrl.substring(0, 80) + '...' : 'NÃO ENCONTRADO'}`);
+        
         const canal = {
             id: tvId,
             titulo: raw.title || '',
             videoUrl: videoUrl
         };
         
+        console.log(`📤 [FRONTEND] Respondendo canal: ${canal.titulo}`);
         res.json({ canal });
     } catch (error) {
+        console.error(`❌ [FRONTEND] Erro:`, error.message);
         res.status(500).json({ canal: null });
     }
 });
 
-// GET /api/buscar
 app.get('/api/buscar', async (req, res) => {
+    console.log(`\n🔍 [FRONTEND] GET /api/buscar?q=${req.query.q}`);
     try {
         const q = req.query.q || '';
         if (!q) return res.json({ filmes: [] });
@@ -263,8 +300,10 @@ app.get('/api/buscar', async (req, res) => {
             });
         }
         
+        console.log(`📤 [FRONTEND] Respondendo com ${filmes.length} resultados`);
         res.json({ filmes });
     } catch (error) {
+        console.error(`❌ [FRONTEND] Erro:`, error.message);
         res.status(500).json({ filmes: [] });
     }
 });
@@ -273,7 +312,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Limpeza de cache
 setInterval(() => {
     const now = Date.now();
     for (const [key, value] of cache.entries()) {
