@@ -371,6 +371,17 @@
             document.getElementById('busca').value = '';
             carregar();
         }
+        async function debugFetch(url) {
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    // 🔥 MOSTRA O DEBUG NO PAINEL!
+    if (data._debug) {
+        addDebug(data._debug.url, data._debug.response);
+    }
+    
+    return data;
+}
     </script>
 </body>
 </html>
