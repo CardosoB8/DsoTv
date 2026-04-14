@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DSO TV</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #0F1C2E; color: #FFFFFF; min-height: 100vh; }
@@ -38,14 +37,16 @@
         .card .meta { font-size: 12px; color: #64B5F6; display: flex; align-items: center; gap: 4px; }
         .loading { text-align: center; padding: 30px; color: #B0BEC5; }
         .loading i { margin-right: 8px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.active { display: flex; }
-        .modal-content { width: 95%; max-width: 900px; background: #0F1C2E; border-radius: 18px; overflow: hidden; }
-        .modal-header { padding: 16px 20px; background: #1A2D42; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h3 { font-size: 18px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; }
-        .modal-close { background: none; border: none; color: #FFFFFF; font-size: 26px; cursor: pointer; line-height: 1; }
-        .video-container { aspect-ratio: 16/9; background: #000; }
-        .modal-info { padding: 16px 20px; color: #B0BEC5; font-size: 13px; max-height: 120px; overflow-y: auto; }
+        
+        /* Modal com iframe */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
+        .modal.active { display: block; }
+        .modal-header { padding: 12px 16px; background: #1A2D42; display: flex; justify-content: space-between; align-items: center; position: absolute; top: 0; left: 0; right: 0; z-index: 10; }
+        .modal-header h3 { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; color: #FFF; }
+        .modal-close { background: none; border: none; color: #FFFFFF; font-size: 24px; cursor: pointer; line-height: 1; }
+        .iframe-container { width: 100%; height: 100%; padding-top: 50px; background: #000; }
+        .iframe-container iframe { width: 100%; height: 100%; border: none; }
+        
         .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 8px 16px; font-size: 12px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
         @media (min-width: 768px) { .grid { grid-template-columns: repeat(4, 1fr); } .grid.tv-mode { grid-template-columns: repeat(2, 1fr); } .search input { width: 240px; } }
     </style>
@@ -70,16 +71,14 @@
     <div class="grid" id="grid"></div>
     <div class="loading" id="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando...</div>
     
+    <!-- Modal com iframe -->
     <div class="modal" id="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitulo">Título</h3>
-                <button class="modal-close" id="modalClose">&times;</button>
-            </div>
-            <div class="video-container">
-                <video id="player" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto"></video>
-            </div>
-            <div class="modal-info" id="modalInfo"></div>
+        <div class="modal-header">
+            <h3 id="modalTitulo">Título</h3>
+            <button class="modal-close" id="modalClose">&times;</button>
+        </div>
+        <div class="iframe-container">
+            <iframe id="videoIframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
         </div>
     </div>
     
@@ -88,11 +87,8 @@
         <span><i class="fas fa-wifi"></i> DSO TV</span>
     </div>
 
-    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
     <script>
-        // Configuração global
         const API_BASE = '/api';
-        let player = null;
         let currentMode = 'filmes';
         let currentCategory = '0';
         let offset = 0;
@@ -105,21 +101,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicializa player com suporte a HLS
-            player = videojs('player', {
-                controls: true,
-                autoplay: false,
-                preload: 'auto',
-                fluid: true,
-                playbackRates: [0.5, 1, 1.5, 2],
-                html5: {
-                    hls: {
-                        overrideNative: true
-                    }
-                }
-            });
-
-            // Event listeners
             document.querySelectorAll('.nav button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     currentMode = btn.dataset.mode;
@@ -159,9 +140,9 @@
                 }
             });
 
-            document.getElementById('modalClose').addEventListener('click', closeModal);
-            document.getElementById('modal').addEventListener('click', e => {
-                if (e.target.classList.contains('modal')) closeModal();
+            document.getElementById('modalClose').addEventListener('click', () => {
+                document.getElementById('modal').classList.remove('active');
+                document.getElementById('videoIframe').src = '';
             });
 
             document.getElementById('grid').addEventListener('click', e => {
@@ -169,16 +150,9 @@
                 if (card) openContent(card.dataset.id, card.dataset.title);
             });
 
-            // Iniciar
             loadCategories();
             loadContent();
         });
-
-        function closeModal() {
-            player.pause();
-            player.reset();
-            document.getElementById('modal').classList.remove('active');
-        }
 
         async function loadCategories() {
             try {
@@ -197,9 +171,7 @@
                         container.appendChild(btn);
                     });
                 }
-            } catch (e) {
-                console.warn('Categorias indisponíveis');
-            }
+            } catch (e) {}
         }
 
         async function loadContent() {
@@ -212,12 +184,10 @@
             document.getElementById('grid').innerHTML = '';
 
             try {
-                let url;
-                if (currentMode === 'filmes') {
-                    url = `${API_BASE}/filmes?limit=50&offset=0&category=${currentCategory}`;
-                } else {
-                    url = `${API_BASE}/canais`;
-                }
+                let url = currentMode === 'filmes' 
+                    ? `${API_BASE}/filmes?limit=50&offset=0&category=${currentCategory}`
+                    : `${API_BASE}/canais`;
+                
                 const res = await fetch(url);
                 const data = await res.json();
                 const items = data.filmes || data.canais || [];
@@ -271,7 +241,6 @@
                 card.dataset.id = item.id;
                 card.dataset.title = item.titulo || item.title;
                 
-                // 🔥 CORREÇÃO: Thumbnail para TV - tenta thumb, depois logo, depois cover
                 let thumbUrl = item.thumb || '';
                 if (!thumbUrl && currentMode === 'tv') {
                     thumbUrl = item.logo || item.cover || '';
@@ -306,34 +275,7 @@
                 
                 if (item && item.videoUrl) {
                     document.getElementById('modalTitulo').textContent = item.titulo || title;
-                    let infoHtml = '';
-                    if (item.ano) infoHtml += `<span><i class="far fa-calendar-alt"></i> ${item.ano}</span> `;
-                    if (item.duracao) infoHtml += `<span><i class="far fa-clock"></i> ${item.duracao}</span> `;
-                    if (item.pais) infoHtml += `<span><i class="fas fa-globe"></i> ${item.pais}</span>`;
-                    if (item.descricao) infoHtml += `<p style="margin-top:8px;">${item.descricao.substring(0, 250)}${item.descricao.length > 250 ? '...' : ''}</p>`;
-                    document.getElementById('modalInfo').innerHTML = infoHtml || (currentMode === 'tv' ? '<span><i class="fas fa-circle" style="color:#39FF14;"></i> Transmissão ao vivo</span>' : '');
-                    
-                    // 🔥 CORREÇÃO: Garantir que a URL do vídeo seja válida
-                    let videoUrl = item.videoUrl;
-                    if (videoUrl && !videoUrl.startsWith('http')) {
-                        videoUrl = 'http://' + videoUrl;
-                    }
-                    
-                    console.log('📺 Reproduzindo:', videoUrl);
-                    
-                    player.src({
-                        src: videoUrl,
-                        type: videoUrl.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4'
-                    });
-                    
-                    player.ready(() => {
-                        player.play().catch(e => {
-                            console.log('Autoplay bloqueado, tentando com interação:', e);
-                            // Tenta novamente após um pequeno delay
-                            setTimeout(() => player.play().catch(e2 => console.log('Falha no play:', e2)), 100);
-                        });
-                    });
-                    
+                    document.getElementById('videoIframe').src = item.videoUrl;
                     document.getElementById('modal').classList.add('active');
                     setStatus(`Reproduzindo: ${item.titulo || title}`);
                 } else {
@@ -341,7 +283,6 @@
                     alert('Conteúdo indisponível no momento.');
                 }
             } catch (e) {
-                console.error('Erro ao abrir:', e);
                 setStatus('Erro ao abrir');
                 alert('Falha ao carregar o conteúdo.');
             }
