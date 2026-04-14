@@ -16,20 +16,33 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// ========== TIMESTAMP CORRIGIDO (UTC) ==========
 function generateTimestamp() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    // Usa UTC para evitar problemas de fuso horário
+    const year = now.getUTCFullYear();
+    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(now.getUTCDate()).padStart(2, '0');
+    const hours = String(now.getUTCHours()).padStart(2, '0');
+    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    
     return `${year}${month}${day}${hours}${minutes}${seconds}`;
 }
 
 function generateHash(timestamp) {
     const hashString = `${timestamp}|${SECRET}|${MSISDN}|${DEVICE_ID}|android`;
     return crypto.createHash('sha256').update(hashString).digest('hex');
+}
+
+function fixVideoUrl(url) {
+    if (!url) return '';
+    let fixed = url.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
+    if (!fixed.startsWith('http://') && !fixed.startsWith('https://')) {
+        fixed = 'http://' + fixed;
+    }
+    return fixed;
 }
 
 function buildUrl(endpoint, params = {}) {
@@ -56,45 +69,31 @@ function buildUrl(endpoint, params = {}) {
 async function callApi(endpoint, params = {}) {
     const url = buildUrl(endpoint, params);
     
-    console.log('📤 URL:', url.substring(0, 150) + '...');
+    console.log('📤 URL:', url.substring(0, 200) + '...');
     
     try {
-        // Tenta com axios (mais robusto)
         const response = await axios.get(url, {
             headers: {
                 'X-Api-Key': 'bigzun.com',
                 'Device-Id': DEVICE_ID,
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'application/json',
-                'Connection': 'keep-alive'
+                'Accept': 'application/json'
             },
             timeout: 30000
         });
         
-        console.log('✅ Resposta recebida:', response.data.code);
-        return { data: response.data, debug: { url, response: JSON.stringify(response.data).substring(0, 300) } };
-        
+        return { 
+            data: response.data, 
+            debug: { url, response: JSON.stringify(response.data).substring(0, 400) } 
+        };
     } catch (error) {
-        console.error('❌ Erro axios:', error.message);
-        
-        // Fallback para fetch
-        try {
-            const res = await fetch(url, {
-                headers: {
-                    'X-Api-Key': 'bigzun.com',
-                    'Device-Id': DEVICE_ID,
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
-            });
-            const data = await res.json();
-            return { data, debug: { url, response: JSON.stringify(data).substring(0, 300) } };
-        } catch (e2) {
-            throw new Error(`Axios: ${error.message}, Fetch: ${e2.message}`);
-        }
+        console.error('❌ Erro:', error.message);
+        throw error;
     }
 }
 
-// Endpoints
+// ========== ENDPOINTS ==========
+
 app.get('/api/filmes', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 50;
@@ -124,9 +123,116 @@ app.get('/api/filmes', async (req, res) => {
     }
 });
 
-// ... (outros endpoints similares)
+app.get('/api/categorias', async (req, res) => {
+    try {
+        const { data, debug } = await callApi('partner/content/getFilmCategoryList', {});
+        
+        const categorias = (data.data || []).map(cat => ({
+            id: cat.id,
+            nome: cat.name || cat.title || 'Sem nome'
+        }));
+        
+        res.json({ categorias, _debug: debug });
+    } catch (e) {
+        res.json({ categorias: [], _debug: { error: e.message } });
+    }
+});
 
-app.get('/', (req, res) => {
+app.get('/api/canais', async (req, res) => {
+    try {
+        const { data, debug } = await callApi('partner/content/getAllTV', { limit: 200 });
+        
+        const canais = (data.data || []).map(canal => ({
+            id: canal.id,
+            titulo: canal.title || 'Sem nome',
+            thumb: canal.thumb || ''
+        }));
+        
+        res.json({ canais, _debug: debug });
+    } catch (e) {
+        res.json({ canais: [], _debug: { error: e.message } });
+    }
+});
+
+app.get('/api/filme/:id', async (req, res) => {
+    try {
+        const filmId = req.params.id;
+        const { data, debug } = await callApi('partner/content/getFilmDetail', { film_id: filmId });
+        
+        const raw = data.data || {};
+        let videoUrl = raw.media_url || raw.video_url || '';
+        if (videoUrl) {
+            videoUrl = fixVideoUrl(videoUrl);
+        }
+        
+        res.json({
+            filme: {
+                id: raw.id || filmId,
+                titulo: raw.title || '',
+                thumb: raw.thumb || raw.cover || '',
+                ano: raw.year || raw.release_year || '',
+                duracao: raw.duration || '',
+                pais: raw.nation || '',
+                descricao: (raw.description || '').replace(/<[^>]*>/g, ''),
+                videoUrl: videoUrl
+            },
+            _debug: debug
+        });
+    } catch (e) {
+        res.json({ filme: null, _debug: { error: e.message } });
+    }
+});
+
+app.get('/api/canal/:id', async (req, res) => {
+    try {
+        const tvId = req.params.id;
+        const { data, debug } = await callApi('partner/content/playTelevision', { tv_id: tvId });
+        
+        const raw = data.data || {};
+        let videoUrl = raw.stream_url || raw.url || '';
+        if (videoUrl && !videoUrl.startsWith('http')) {
+            videoUrl = 'http://' + videoUrl;
+        }
+        
+        res.json({ 
+            canal: { id: tvId, titulo: raw.title || '', videoUrl },
+            _debug: debug
+        });
+    } catch (e) {
+        res.json({ canal: null, _debug: { error: e.message } });
+    }
+});
+
+app.get('/api/buscar', async (req, res) => {
+    try {
+        const q = req.query.q || '';
+        if (!q) return res.json({ filmes: [] });
+        
+        const { data, debug } = await callApi('app/search', { keyword: q, limit: 50 });
+        
+        const filmes = [];
+        const rawData = data.data || [];
+        
+        for (const section of rawData) {
+            if (section.lists) {
+                for (const item of section.lists) {
+                    filmes.push({
+                        id: item.id,
+                        titulo: item.title || '',
+                        thumb: item.thumb || item.cover || ''
+                    });
+                }
+            }
+        }
+        
+        res.json({ filmes, _debug: debug });
+    } catch (e) {
+        res.json({ filmes: [], _debug: { error: e.message } });
+    }
+});
+
+// Rota catch-all para o frontend
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
