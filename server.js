@@ -225,6 +225,116 @@ app.get('/api/buscar', async (req, res) => {
     } catch (e) { res.json({ filmes: [] }); }
 });
 
+// 🔥 ENDPOINT DO WEBVIEW PLAYER
+app.get('/player', (req, res) => {
+    const url = req.query.url || '';
+    const title = req.query.title || 'DSO TV';
+    
+    if (!url) {
+        return res.send('<h1 style="color:white;text-align:center;padding:50px;">URL não fornecida</h1>');
+    }
+    
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <meta name="referrer" content="no-referrer">
+            <title>${title}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { 
+                    background: #000; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    min-height: 100vh;
+                    font-family: Arial, sans-serif;
+                }
+                .player-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+                object {
+                    width: 100%;
+                    height: 100vh;
+                    max-height: 100vh;
+                    background: #000;
+                }
+                embed {
+                    width: 100%;
+                    height: 100vh;
+                }
+                .fallback {
+                    display: none;
+                    width: 100%;
+                    height: 100vh;
+                }
+                .fallback iframe {
+                    width: 100%;
+                    height: 100vh;
+                    border: none;
+                }
+                .error-message {
+                    color: #fff;
+                    text-align: center;
+                    padding: 20px;
+                    display: none;
+                }
+                .btn-newtab {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #E50914;
+                    color: #fff;
+                    border: none;
+                    padding: 12px 20px;
+                    border-radius: 30px;
+                    font-size: 14px;
+                    cursor: pointer;
+                    z-index: 1000;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="player-wrapper">
+                <object data="${url}" type="application/x-mpegURL" id="playerObject">
+                    <embed src="${url}" type="video/mp4" id="playerEmbed">
+                    <div class="fallback" id="fallbackIframe">
+                        <iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen"></iframe>
+                    </div>
+                </object>
+                <div class="error-message" id="errorMessage">
+                    <p>Não foi possível carregar o player nativo.</p>
+                </div>
+            </div>
+            <button class="btn-newtab" onclick="window.open('${url}', '_blank')">
+                Abrir em nova aba
+            </button>
+            <script>
+                // Verificar se o object/embed carregou
+                setTimeout(function() {
+                    var objectEl = document.getElementById('playerObject');
+                    var fallback = document.getElementById('fallbackIframe');
+                    var errorMsg = document.getElementById('errorMessage');
+                    
+                    // Se o object não tem altura ou está vazio, mostrar fallback
+                    if (objectEl.offsetHeight === 0 || objectEl.offsetHeight === undefined) {
+                        objectEl.style.display = 'none';
+                        fallback.style.display = 'block';
+                    }
+                }, 2000);
+            </script>
+        </body>
+        </html>
+    `);
+});
+
 app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); });
 
 if (process.env.VERCEL) { module.exports = app; }
