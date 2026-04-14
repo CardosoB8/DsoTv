@@ -75,14 +75,10 @@
         .player-close { background: none; border: none; color: #FFFFFF; font-size: 22px; cursor: pointer; }
         .player-container { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; }
         .player-container iframe { width: 100%; height: 100%; border: none; }
-        .player-container object { width: 100%; height: 100%; }
         .player-container .video-js { width: 100%; height: 100%; }
         .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 6px 16px; font-size: 11px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
         .ad-container { display: flex; justify-content: center; padding: 6px; }
         .ad-placeholder { background: linear-gradient(135deg, #1A2D42, #2A3D52); border: 1px dashed #64B5F6; border-radius: 8px; padding: 10px; text-align: center; color: #B0BEC5; font-size: 11px; width: 100%; }
-        .player-method-selector { display: flex; gap: 5px; padding: 8px 14px; background: #0a1520; }
-        .player-method-btn { background: #1A2D42; color: #B0BEC5; border: none; padding: 6px 10px; border-radius: 15px; font-size: 11px; cursor: pointer; flex: 1; }
-        .player-method-btn.active { background: #E50914; color: #FFF; }
         @media (min-width: 768px) { 
             .grid { grid-template-columns: repeat(5, 1fr); } 
             .grid.tv-mode { grid-template-columns: repeat(3, 1fr); } 
@@ -123,8 +119,7 @@
             <div class="detalhes-titulo-original" id="detalhesTituloOriginal"></div>
             <div class="detalhes-meta" id="detalhesMeta"></div>
             <div class="detalhes-botoes">
-                <button class="btn-primary" id="btnAssistir"><i class="fas fa-play"></i> Assistir (Iframe)</button>
-                <button class="btn-secondary" id="btnAssistirObject"><i class="fas fa-play"></i> Assistir (Object)</button>
+                <button class="btn-primary" id="btnAssistir"><i class="fas fa-play"></i> Assistir (WebView)</button>
                 <button class="btn-secondary" id="btnAbrirNovaAba"><i class="fas fa-external-link-alt"></i> Nova Aba</button>
             </div>
             <div class="detalhes-sinopse">
@@ -143,10 +138,6 @@
         <div class="player-header">
             <h3 id="playerTitle">Reproduzindo</h3>
             <button class="player-close" id="playerClose">&times;</button>
-        </div>
-        <div class="player-method-selector" id="playerMethodSelector" style="display:none;">
-            <button class="player-method-btn active" data-method="iframe">Iframe</button>
-            <button class="player-method-btn" data-method="object">Object/Embed</button>
         </div>
         <div class="player-container" id="playerContainer"></div>
     </div>
@@ -167,7 +158,6 @@
         let searchTimeout = null;
         let filmeAtual = null;
         let videoPlayer = null;
-        let currentPlayerMethod = 'iframe';
 
         function setStatus(text) { document.getElementById('statusMsg').textContent = text; }
 
@@ -213,13 +203,7 @@
 
             document.getElementById('btnAssistir').addEventListener('click', () => {
                 if (filmeAtual && filmeAtual.videoUrl) {
-                    playVideoWithMethod(filmeAtual.videoUrl, filmeAtual.titulo, 'iframe');
-                }
-            });
-
-            document.getElementById('btnAssistirObject').addEventListener('click', () => {
-                if (filmeAtual && filmeAtual.videoUrl) {
-                    playVideoWithMethod(filmeAtual.videoUrl, filmeAtual.titulo, 'object');
+                    openWebView(filmeAtual.videoUrl, filmeAtual.titulo);
                 }
             });
 
@@ -232,17 +216,6 @@
             document.getElementById('playerClose').addEventListener('click', closePlayer);
             document.getElementById('playerModal').addEventListener('click', e => {
                 if (e.target.classList.contains('player-modal')) closePlayer();
-            });
-
-            document.querySelectorAll('.player-method-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    currentPlayerMethod = btn.dataset.method;
-                    document.querySelectorAll('.player-method-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    if (filmeAtual && filmeAtual.videoUrl) {
-                        renderPlayer(filmeAtual.videoUrl, filmeAtual.titulo);
-                    }
-                });
             });
 
             document.getElementById('contentContainer').addEventListener('click', e => {
@@ -259,7 +232,7 @@
                 } else if (type === 'tv-movtv') {
                     fetchTVMOVTVUrl(id, title);
                 } else if (type === 'tv-iptv') {
-                    if (url) playVideoWithMethod(url, title, 'videojs');
+                    if (url) playIPTV(url, title);
                 }
             });
 
@@ -286,31 +259,31 @@
             document.getElementById('playerContainer').innerHTML = '';
         }
 
-        function playVideoWithMethod(url, title, method) {
-            currentPlayerMethod = method;
+        // 🔥 WEBVIEW PLAYER
+        function openWebView(url, title) {
             closePlayer();
             document.getElementById('playerTitle').textContent = title || 'Reproduzindo';
-            document.getElementById('playerMethodSelector').style.display = method === 'videojs' ? 'none' : 'flex';
             document.getElementById('playerModal').classList.add('active');
-            renderPlayer(url, title);
+            
+            const container = document.getElementById('playerContainer');
+            const webViewUrl = `/player?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title || '')}`;
+            container.innerHTML = `<iframe src="${webViewUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen" style="width:100%;height:100%;border:none;"></iframe>`;
+            setStatus('Reproduzindo: ' + title);
         }
 
-        function renderPlayer(url, title) {
-            const container = document.getElementById('playerContainer');
-            container.innerHTML = '';
+        function playIPTV(url, title) {
+            closePlayer();
+            document.getElementById('playerTitle').textContent = title || 'Reproduzindo';
+            document.getElementById('playerModal').classList.add('active');
             
-            if (currentPlayerMethod === 'videojs') {
-                const videoElement = document.createElement('video');
-                videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
-                container.appendChild(videoElement);
-                videoPlayer = videojs(videoElement, { controls: true, autoplay: true, preload: 'auto', fluid: true, html5: { hls: { overrideNative: true } } });
-                videoPlayer.ready(() => { videoPlayer.src({ src: url, type: url.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' }); videoPlayer.play().catch(e => {}); });
-                videoPlayer.on('error', () => setStatus('Erro - tente outro metodo'));
-            } else if (currentPlayerMethod === 'iframe') {
-                container.innerHTML = `<iframe src="${url}" allowfullscreen allow="autoplay; encrypted-media; fullscreen" style="width:100%;height:100%;border:none;"></iframe>`;
-            } else if (currentPlayerMethod === 'object') {
-                container.innerHTML = `<object data="${url}" type="application/x-mpegURL" style="width:100%;height:100%;"><embed src="${url}" type="video/mp4"></embed></object>`;
-            }
+            const container = document.getElementById('playerContainer');
+            const videoElement = document.createElement('video');
+            videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
+            container.appendChild(videoElement);
+            
+            videoPlayer = videojs(videoElement, { controls: true, autoplay: true, preload: 'auto', fluid: true, html5: { hls: { overrideNative: true } } });
+            videoPlayer.ready(() => { videoPlayer.src({ src: url, type: url.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' }); videoPlayer.play().catch(e => {}); });
+            videoPlayer.on('error', () => setStatus('Erro - tente novamente'));
             setStatus('Reproduzindo: ' + title);
         }
 
