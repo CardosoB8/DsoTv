@@ -12,7 +12,6 @@ const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
 const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
 
-// Headers para API de metadados (sem Referer e X-Requested-With)
 const API_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     'Accept': 'application/json',
@@ -75,7 +74,7 @@ async function callApi(endpoint, params = {}) {
     return response.data;
 }
 
-// Cache simples
+// Cache
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -99,14 +98,14 @@ app.get('/api/categorias', async (req, res) => {
         const data = await callApi('partner/content/getFilmCategoryList', {});
         const categorias = (data.data || []).map(cat => ({
             id: cat.id,
-            nome: cat.name || cat.title || 'Sem nome'
+            nome: cat.name || cat.title || 'Sem nome',
+            imagem: cat.image_url || ''
         }));
         
         const result = { categorias };
         setCached('categorias', result);
         res.json(result);
     } catch (e) {
-        console.error('Erro categorias:', e.message);
         res.json({ categorias: [] });
     }
 });
@@ -135,14 +134,14 @@ app.get('/api/filmes', async (req, res) => {
             id: item.id,
             titulo: item.title || 'Sem título',
             thumb: item.thumb || '',
-            ano: item.year || ''
+            thumb_horizontal: item.thumb_horizontal || '',
+            ano: item.published_year || item.year || ''
         }));
         
         const result = { filmes };
         setCached(cacheKey, result);
         res.json(result);
     } catch (e) {
-        console.error('Erro filmes:', e.message);
         res.json({ filmes: [] });
     }
 });
@@ -153,30 +152,16 @@ app.get('/api/canais', async (req, res) => {
         if (cached) return res.json(cached);
         
         const data = await callApi('partner/content/getAllTV', { limit: 200 });
-        
-        const canais = (data.data || []).map(canal => {
-            // Exatamente como o APK faz
-            let thumbUrl = '';
-            if (canal.thumb && canal.thumb.trim() && !canal.thumb.includes('null')) {
-                thumbUrl = canal.thumb;
-            } else if (canal.logo && canal.logo.trim()) {
-                thumbUrl = canal.logo;
-            } else if (canal.cover && canal.cover.trim()) {
-                thumbUrl = canal.cover;
-            }
-            
-            return {
-                id: canal.id,
-                titulo: canal.title || 'Sem nome',
-                thumb: thumbUrl
-            };
-        });
+        const canais = (data.data || []).map(canal => ({
+            id: canal.id,
+            titulo: canal.title || 'Sem nome',
+            thumb: canal.thumb || ''
+        }));
         
         const result = { canais };
         setCached('canais', result);
         res.json(result);
     } catch (e) {
-        console.error('Erro canais:', e.message);
         res.json({ canais: [] });
     }
 });
@@ -187,27 +172,38 @@ app.get('/api/filme/:id', async (req, res) => {
         const data = await callApi('partner/content/getFilmDetail', { film_id: filmId });
         
         const raw = data.data || {};
-        let videoUrl = raw.media_url || raw.video_url || '';
+        let videoUrl = raw.media_url || '';
         
-        // Não substitui domínio, mantém original
-        if (videoUrl && !videoUrl.startsWith('http')) {
-            videoUrl = 'http://' + videoUrl;
+        // Substituir domínio para filmes
+        if (videoUrl) {
+            videoUrl = videoUrl.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
+            if (!videoUrl.startsWith('http')) videoUrl = 'http://' + videoUrl;
         }
+        
+        // Extrair atores
+        const atores = (raw.actors || []).map(a => a.title || a.name).filter(Boolean);
+        
+        // Extrair categorias
+        const categorias = (raw.category || []).map(c => c.title || c.name).filter(Boolean);
         
         res.json({
             filme: {
                 id: raw.id || filmId,
                 titulo: raw.title || '',
-                thumb: raw.thumb || raw.cover || '',
-                ano: raw.year || raw.release_year || '',
+                titulo_original: raw.title_original || '',
+                capa: raw.cover || raw.thumb || '',
+                thumb: raw.thumb || '',
+                ano: raw.published_year || raw.year || '',
                 duracao: raw.duration || '',
                 pais: raw.nation || '',
-                descricao: (raw.description || '').replace(/<[^>]*>/g, ''),
+                sinopse: (raw.brief || raw.description || '').replace(/<[^>]*>/g, ''),
+                categorias: categorias,
+                atores: atores,
+                is_serie: raw.is_series == 1,
                 videoUrl: videoUrl
             }
         });
     } catch (e) {
-        console.error('Erro filme:', e.message);
         res.json({ filme: null });
     }
 });
@@ -218,19 +214,21 @@ app.get('/api/canal/:id', async (req, res) => {
         const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
         
         const raw = data.data || {};
-        // NÃO substitui domínio para TV - exatamente como no APK!
-        let videoUrl = raw.stream_url || raw.url || raw.media_url || '';
+        let videoUrl = raw.media_url || raw.stream_url || raw.url || '';
         
-        // Apenas garante que começa com http
+        // NÃO substituir domínio para TV
         if (videoUrl && !videoUrl.startsWith('http')) {
             videoUrl = 'http://' + videoUrl;
         }
         
-        console.log('📺 TV Stream URL:', videoUrl);
-        
-        res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
+        res.json({ 
+            canal: { 
+                id: tvId, 
+                titulo: raw.title || '', 
+                videoUrl: videoUrl
+            } 
+        });
     } catch (e) {
-        console.error('Erro canal:', e.message);
         res.json({ canal: null });
     }
 });
@@ -250,8 +248,8 @@ app.get('/api/buscar', async (req, res) => {
                     filmes.push({
                         id: item.id,
                         titulo: item.title || '',
-                        thumb: item.thumb || item.cover || '',
-                        ano: item.year || ''
+                        thumb: item.thumb || '',
+                        ano: item.published_year || item.year || ''
                     });
                 }
             }
@@ -259,9 +257,33 @@ app.get('/api/buscar', async (req, res) => {
         
         res.json({ filmes });
     } catch (e) {
-        console.error('Erro busca:', e.message);
         res.json({ filmes: [] });
     }
+});
+
+// Página de player para redirecionamento
+app.get('/player', (req, res) => {
+    const url = req.query.url || '';
+    const title = req.query.title || 'DSO TV';
+    
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <title>${title}</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { background: #000; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                video { width: 100%; height: 100vh; object-fit: contain; }
+            </style>
+        </head>
+        <body>
+            <video controls autoplay playsinline src="${url}"></video>
+        </body>
+        </html>
+    `);
 });
 
 app.get('*', (req, res) => {
