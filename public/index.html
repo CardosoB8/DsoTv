@@ -3,87 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DSO TV - TODOS OS MÉTODOS</title>
+    <title>DSO TV</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #0F1C2E; color: #FFFFFF; min-height: 100vh; padding-bottom: 250px; }
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #0F1C2E; color: #FFFFFF; min-height: 100vh; }
         
-        .header { background: #1A2D42; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 22px; font-weight: bold; color: #E50914; display: flex; align-items: center; gap: 6px; }
+        /* Header */
+        .header { background: rgba(26,45,66,0.98); backdrop-filter: blur(10px); padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 24px; font-weight: bold; color: #E50914; display: flex; align-items: center; gap: 6px; }
         .nav { display: flex; gap: 8px; margin-left: auto; }
-        .nav button { background: none; border: none; color: #B0BEC5; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-        .nav button i { font-size: 16px; }
+        .nav button { background: none; border: none; color: #B0BEC5; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .nav button i { font-size: 18px; }
         .nav button.active { background: #E50914; color: #FFFFFF; }
-        .search { background: rgba(255,255,255,0.08); border-radius: 24px; padding: 6px 16px; display: flex; align-items: center; gap: 8px; }
-        .search i { color: #B0BEC5; font-size: 14px; }
-        .search input { background: none; border: none; color: #FFFFFF; outline: none; font-size: 14px; width: 180px; }
+        .search { background: rgba(255,255,255,0.1); border-radius: 30px; padding: 8px 16px; display: flex; align-items: center; gap: 10px; }
+        .search i { color: #B0BEC5; font-size: 16px; }
+        .search input { background: none; border: none; color: #FFFFFF; outline: none; font-size: 14px; width: 200px; }
         .search input::placeholder { color: #6c7a8a; }
         
-        .categorias { padding: 12px 16px; display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        .categoria { background: #1A2D42; border: none; color: #B0BEC5; padding: 8px 18px; border-radius: 24px; cursor: pointer; white-space: nowrap; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-        .categoria i { font-size: 13px; }
+        /* Categorias */
+        .categorias { padding: 16px; display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .categoria { background: #1A2D42; border: none; color: #B0BEC5; padding: 10px 20px; border-radius: 30px; cursor: pointer; white-space: nowrap; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .categoria i { font-size: 14px; }
         .categoria.active { background: #E50914; color: #FFFFFF; }
         
-        .grid { padding: 16px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        /* Grid */
+        .grid { padding: 16px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
         .grid.tv-mode { grid-template-columns: 1fr; }
-        .grid.tv-mode .card { display: flex; height: 80px; }
-        .grid.tv-mode .card .thumb { width: 120px; height: 80px; aspect-ratio: auto; }
-        .grid.tv-mode .card .info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+        .grid.tv-mode .card { display: flex; height: 90px; }
+        .grid.tv-mode .card .thumb { width: 140px; height: 90px; }
         
-        .card { background: #1A2D42; border-radius: 14px; overflow: hidden; cursor: pointer; transition: transform 0.15s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .card:active { transform: scale(0.98); }
-        .card .thumb { aspect-ratio: 2/3; background: #0a1520; display: flex; align-items: center; justify-content: center; }
-        .card .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .card .thumb .fallback { font-size: 36px; color: #3a5068; }
-        .card .info { padding: 12px; }
-        .card .titulo { font-size: 14px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
-        .card .meta { font-size: 12px; color: #64B5F6; display: flex; align-items: center; gap: 4px; }
+        /* Cards */
+        .card { background: #1A2D42; border-radius: 16px; overflow: hidden; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(229,9,20,0.3); }
+        .card .thumb { aspect-ratio: 2/3; background: #0a1520; display: flex; align-items: center; justify-content: center; position: relative; }
+        .card .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .card .thumb .fallback { font-size: 40px; color: #3a5068; }
+        .card .thumb .live-badge { position: absolute; top: 8px; left: 8px; background: #E50914; color: #FFF; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .card .info { padding: 14px; }
+        .card .titulo { font-size: 15px; font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; }
+        .card .meta { font-size: 13px; color: #64B5F6; display: flex; align-items: center; gap: 6px; }
         
-        .loading { text-align: center; padding: 30px; color: #B0BEC5; }
-        .loading i { margin-right: 8px; }
+        /* Loading */
+        .loading { text-align: center; padding: 40px; color: #B0BEC5; }
+        .loading i { font-size: 40px; color: #E50914; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
-        .ad-container { display: flex; justify-content: center; padding: 8px; }
-        .ad-placeholder { background: linear-gradient(135deg, #1A2D42, #2A3D52); border: 2px dashed #64B5F6; border-radius: 8px; padding: 12px; text-align: center; color: #B0BEC5; font-size: 12px; width: 100%; }
+        /* Página de Detalhes */
+        .detalhes-page { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0F1C2E; z-index: 1000; overflow-y: auto; display: none; }
+        .detalhes-page.active { display: block; }
+        .detalhes-header { position: relative; }
+        .detalhes-back { position: absolute; top: 20px; left: 20px; z-index: 10; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); border: none; color: #FFF; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; }
+        .detalhes-capa { width: 100%; height: 300px; object-fit: cover; }
+        .detalhes-capa-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 150px; background: linear-gradient(transparent, #0F1C2E); }
+        .detalhes-content { padding: 20px; margin-top: -50px; position: relative; }
+        .detalhes-titulo { font-size: 28px; font-weight: bold; margin-bottom: 5px; }
+        .detalhes-titulo-original { font-size: 16px; color: #B0BEC5; margin-bottom: 15px; }
+        .detalhes-meta { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; color: #B0BEC5; }
+        .detalhes-meta span { display: flex; align-items: center; gap: 6px; }
+        .detalhes-meta i { color: #E50914; }
+        .detalhes-botoes { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+        .btn-primary { background: #E50914; color: #FFF; border: none; padding: 14px 30px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: #FFF; border: none; padding: 14px 25px; border-radius: 30px; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .detalhes-sinopse { margin-bottom: 25px; }
+        .detalhes-sinopse h3 { font-size: 18px; margin-bottom: 10px; color: #64B5F6; }
+        .detalhes-sinopse p { color: #B0BEC5; line-height: 1.6; }
+        .detalhes-elenco { margin-bottom: 25px; }
+        .detalhes-elenco h3 { font-size: 18px; margin-bottom: 10px; color: #64B5F6; }
+        .elenco-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .elenco-tag { background: #1A2D42; padding: 8px 16px; border-radius: 20px; color: #FFF; font-size: 14px; }
+        .detalhes-categorias { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }
+        .categoria-tag { background: rgba(100,181,246,0.2); color: #64B5F6; padding: 6px 14px; border-radius: 20px; font-size: 13px; }
         
-        /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
-        .modal.active { display: flex; flex-direction: column; }
-        .modal-header { padding: 12px 16px; background: #1A2D42; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .modal-header h3 { font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; color: #FFF; }
-        .modal-actions { display: flex; gap: 5px; }
-        .modal-action-btn { background: #333; color: #fff; border: none; padding: 5px 8px; border-radius: 4px; font-size: 10px; cursor: pointer; }
-        .modal-action-btn.newtab { background: #27ae60; }
-        .modal-close { background: none; border: none; color: #FFFFFF; font-size: 24px; cursor: pointer; line-height: 1; margin-left: 5px; }
-        .video-container { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; padding: 10px; }
-        .video-container video, .video-container iframe { width: 100%; max-width: 100%; max-height: 60vh; aspect-ratio: 16 / 9; object-fit: contain; background: #000; border: none; }
+        /* Anúncios */
+        .ad-container { display: flex; justify-content: center; padding: 10px; }
+        .ad-placeholder { background: linear-gradient(135deg, #1A2D42, #2A3D52); border: 2px dashed #64B5F6; border-radius: 12px; padding: 15px; text-align: center; color: #B0BEC5; font-size: 14px; width: 100%; }
         
-        /* Painel de Métodos */
-        .methods-panel { position: fixed; bottom: 30px; left: 0; right: 0; background: #0a0a0a; border-top: 3px solid #E50914; max-height: 220px; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 10px; z-index: 200; }
-        .methods-title { color: #E50914; margin-bottom: 5px; font-weight: bold; display: flex; justify-content: space-between; }
-        .methods-url { background: #1a1a1a; padding: 5px; border-radius: 4px; word-break: break-all; color: #64B5F6; margin-bottom: 8px; font-size: 9px; }
-        .methods-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-        .method-btn { background: #333; color: #fff; border: none; padding: 6px 5px; border-radius: 4px; font-size: 9px; cursor: pointer; }
-        .method-btn.primary { background: #E50914; }
-        .method-btn.success { background: #27ae60; }
-        .method-btn.warning { background: #f39c12; }
-        .method-btn.info { background: #2980b9; }
-        .method-btn.purple { background: #8e44ad; }
-        
-        .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 8px 16px; font-size: 12px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
+        /* Status Bar */
+        .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 10px 20px; font-size: 13px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
         
         @media (min-width: 768px) { 
             .grid { grid-template-columns: repeat(4, 1fr); } 
             .grid.tv-mode { grid-template-columns: repeat(2, 1fr); } 
-            .search input { width: 240px; } 
-            .methods-grid { grid-template-columns: repeat(6, 1fr); }
+            .detalhes-capa { height: 400px; }
         }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="logo"><i class="fas fa-play-circle"></i> DSO TV - LAB</div>
+        <div class="logo"><i class="fas fa-play-circle"></i> DSO TV</div>
         <div class="nav">
             <button class="active" data-mode="filmes"><i class="fas fa-film"></i> Filmes</button>
             <button data-mode="tv"><i class="fas fa-tv"></i> TV</button>
@@ -94,61 +103,48 @@
         </div>
     </div>
     
+    <!-- Categorias -->
     <div class="categorias" id="categorias">
         <button class="categoria active" data-cat="0"><i class="fas fa-star"></i> Todos</button>
     </div>
     
-    <div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>
+    <!-- Grid -->
     <div class="grid" id="grid"></div>
-    <div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>
-    <div class="loading" id="loading"><i class="fas fa-spinner fa-pulse"></i> Carregando...</div>
+    <div class="loading" id="loading"><i class="fas fa-spinner"></i><br>Carregando...</div>
     
-    <!-- Modal -->
-    <div class="modal" id="modal">
-        <div class="modal-header">
-            <h3 id="modalTitulo">Título</h3>
-            <div class="modal-actions">
-                <button class="modal-action-btn" id="modalCopyBtn">📋 Copiar</button>
-                <button class="modal-action-btn newtab" id="modalNewTabBtn">🔗 Nova Aba</button>
-                <button class="modal-close" id="modalClose">&times;</button>
+    <!-- Página de Detalhes -->
+    <div class="detalhes-page" id="detalhesPage">
+        <div class="detalhes-header">
+            <button class="detalhes-back" id="detalhesBack"><i class="fas fa-arrow-left"></i></button>
+            <img class="detalhes-capa" id="detalhesCapa" src="" alt="">
+            <div class="detalhes-capa-overlay"></div>
+        </div>
+        <div class="detalhes-content">
+            <h1 class="detalhes-titulo" id="detalhesTitulo"></h1>
+            <div class="detalhes-titulo-original" id="detalhesTituloOriginal"></div>
+            <div class="detalhes-meta" id="detalhesMeta"></div>
+            <div class="detalhes-botoes">
+                <button class="btn-primary" id="btnAssistir"><i class="fas fa-play"></i> Assistir</button>
+                <button class="btn-secondary" id="btnAbrirNovaAba"><i class="fas fa-external-link-alt"></i> Abrir em nova aba</button>
             </div>
+            <div class="detalhes-sinopse">
+                <h3><i class="fas fa-align-left"></i> Sinopse</h3>
+                <p id="detalhesSinopse"></p>
+            </div>
+            <div class="detalhes-elenco">
+                <h3><i class="fas fa-users"></i> Elenco</h3>
+                <div class="elenco-grid" id="detalhesElenco"></div>
+            </div>
+            <div class="detalhes-categorias" id="detalhesCategorias"></div>
         </div>
-        <div class="video-container" id="videoContainer"></div>
     </div>
     
-    <!-- Painel de Métodos -->
-    <div class="methods-panel" id="methodsPanel">
-        <div class="methods-title">
-            <span>🧪 LABORATÓRIO DE TESTES - 12 MÉTODOS</span>
-            <button id="clearMethodsBtn" style="background:none;border:none;color:#888;cursor:pointer;">🗑️</button>
-        </div>
-        <div class="methods-url" id="methodsUrl">Clique em um canal para testar</div>
-        <div class="methods-grid" id="methodsGrid" style="display:none;">
-            <button class="method-btn primary" data-method="video">📹 Video</button>
-            <button class="method-btn info" data-method="iframe">🖼️ Iframe</button>
-            <button class="method-btn success" data-method="srcdoc">📄 srcdoc</button>
-            <button class="method-btn warning" data-method="blob">💾 Blob URL</button>
-            <button class="method-btn purple" data-method="embed">🎬 Embed</button>
-            <button class="method-btn" data-method="object">📦 Object</button>
-            <button class="method-btn info" data-method="sandbox">🏖️ Sandbox</button>
-            <button class="method-btn success" data-method="noreferrer">🔒 No-Referrer</button>
-            <button class="method-btn warning" data-method="redirect">↗️ Redirect</button>
-            <button class="method-btn purple" data-method="hlsjs">🎬 Hls.js</button>
-            <button class="method-btn" data-method="videojs">📼 Video.js</button>
-            <button class="method-btn success" data-method="newtab">🔗 Nova Aba</button>
-        </div>
-        <div id="methodsStatus" style="color:#888; margin-top:5px; font-size:9px;"></div>
-    </div>
-    
+    <!-- Status Bar -->
     <div class="status-bar">
-        <span id="statusMsg">Pronto - Clique em um canal para testar 12 métodos!</span>
-        <span><i class="fas fa-flask"></i> LAB</span>
+        <span id="statusMsg">Pronto</span>
+        <span><i class="fas fa-wifi"></i> DSO TV</span>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
-    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
-    
     <script>
         const API_BASE = '/api';
         let currentMode = 'filmes';
@@ -157,127 +153,10 @@
         let isLoading = false;
         let hasMore = true;
         let searchTimeout = null;
-        let currentVideoUrl = '';
-        let currentVideoTitle = '';
-        let currentPlayer = null;
+        let filmeAtual = null;
 
-        function setStatus(text) {
-            document.getElementById('statusMsg').textContent = text;
-        }
+        function setStatus(text) { document.getElementById('statusMsg').textContent = text; }
 
-        // ============= 12 MÉTODOS DE REPRODUÇÃO =============
-        const methods = {
-            // 1. Video tag simples
-            video: (url) => {
-                return `<video controls autoplay playsinline src="${url}" style="width:100%;max-height:60vh;aspect-ratio:16/9;object-fit:contain;background:#000;"></video>`;
-            },
-            // 2. Iframe simples
-            iframe: (url) => {
-                return `<iframe src="${url}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="width:100%;max-height:60vh;aspect-ratio:16/9;border:none;"></iframe>`;
-            },
-            // 3. srcdoc (página completa dentro do iframe)
-            srcdoc: (url) => {
-                const html = `<!DOCTYPE html><html><head><meta name="referrer" content="no-referrer"><style>body{margin:0;background:#000;}video{width:100vw;height:100vh;object-fit:contain;}</style></head><body><video controls autoplay playsinline src="${url}"></video></body></html>`;
-                return `<iframe srcdoc="${html.replace(/"/g, '&quot;')}" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="width:100%;max-height:60vh;aspect-ratio:16/9;border:none;"></iframe>`;
-            },
-            // 4. Blob URL (HTML como blob)
-            blob: (url) => {
-                const html = `<!DOCTYPE html><html><head><meta name="referrer" content="no-referrer"></head><body style="margin:0;background:#000;"><video controls autoplay playsinline src="${url}" style="width:100vw;height:100vh;object-fit:contain;"></video></body></html>`;
-                const blob = new Blob([html], {type: 'text/html'});
-                const blobUrl = URL.createObjectURL(blob);
-                return {html: `<iframe src="${blobUrl}" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="width:100%;max-height:60vh;aspect-ratio:16/9;border:none;"></iframe>`, blobUrl};
-            },
-            // 5. Embed tag
-            embed: (url) => {
-                return `<embed src="${url}" type="video/mp4" style="width:100%;max-height:60vh;aspect-ratio:16/9;background:#000;"></embed>`;
-            },
-            // 6. Object tag
-            object: (url) => {
-                return `<object data="${url}" type="application/x-mpegURL" style="width:100%;max-height:60vh;aspect-ratio:16/9;background:#000;"></object>`;
-            },
-            // 7. Sandbox iframe
-            sandbox: (url) => {
-                return `<iframe src="${url}" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="width:100%;max-height:60vh;aspect-ratio:16/9;border:none;"></iframe>`;
-            },
-            // 8. No-Referrer iframe
-            noreferrer: (url) => {
-                const html = `<!DOCTYPE html><html><head><meta name="referrer" content="no-referrer"></head><body style="margin:0;background:#000;"><video controls autoplay playsinline src="${url}" style="width:100vw;height:100vh;"></video></body></html>`;
-                return `<iframe srcdoc="${html.replace(/"/g, '&quot;')}" referrerpolicy="no-referrer" allow="autoplay; encrypted-media; fullscreen" allowfullscreen style="width:100%;max-height:60vh;aspect-ratio:16/9;border:none;"></iframe>`;
-            }
-        };
-
-        function testMethod(method) {
-            if (!currentVideoUrl) {
-                alert('Nenhuma URL para testar');
-                return;
-            }
-            
-            const container = document.getElementById('videoContainer');
-            const methodName = method;
-            
-            if (currentPlayer && typeof currentPlayer.dispose === 'function') {
-                currentPlayer.dispose();
-            }
-            
-            if (method === 'redirect') {
-                window.location.href = currentVideoUrl;
-                return;
-            }
-            
-            if (method === 'newtab') {
-                window.open(currentVideoUrl, '_blank');
-                setStatus('🔗 Aberto em nova aba');
-                return;
-            }
-            
-            if (method === 'hlsjs') {
-                container.innerHTML = '<video id="hlsVideo" controls autoplay playsinline style="width:100%;max-height:60vh;aspect-ratio:16/9;object-fit:contain;background:#000;"></video>';
-                const video = document.getElementById('hlsVideo');
-                if (Hls.isSupported()) {
-                    const hls = new Hls({ debug: false });
-                    hls.loadSource(currentVideoUrl);
-                    hls.attachMedia(video);
-                    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(e=>{}));
-                    hls.on(Hls.Events.ERROR, (e,d) => setStatus(`❌ Hls.js: ${d.details}`));
-                    setStatus(`🎬 Hls.js: ${currentVideoTitle}`);
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    video.src = currentVideoUrl;
-                    video.play().catch(e=>{});
-                    setStatus(`🍎 HLS Nativo: ${currentVideoTitle}`);
-                }
-                document.getElementById('modal').classList.add('active');
-                return;
-            }
-            
-            if (method === 'videojs') {
-                container.innerHTML = `<video id="vjsVideo" class="video-js vjs-default-skin vjs-big-play-centered" controls preload="auto" style="width:100%;max-height:60vh;aspect-ratio:16/9;"></video>`;
-                const player = videojs('vjsVideo', { fluid: true, autoplay: true });
-                player.src({ src: currentVideoUrl, type: 'application/x-mpegURL' });
-                player.on('error', () => setStatus('❌ Video.js erro'));
-                player.on('play', () => setStatus(`▶️ Video.js: ${currentVideoTitle}`));
-                currentPlayer = player;
-                document.getElementById('modal').classList.add('active');
-                return;
-            }
-            
-            const result = methods[method](currentVideoUrl);
-            if (typeof result === 'object') {
-                container.innerHTML = result.html;
-                setTimeout(() => URL.revokeObjectURL(result.blobUrl), 60000);
-            } else {
-                container.innerHTML = result;
-            }
-            
-            document.getElementById('modal').classList.add('active');
-            setStatus(`🎬 Método ${method}: ${currentVideoTitle}`);
-            
-            setTimeout(() => {
-                const video = container.querySelector('video');
-                if (video) video.play().catch(e => {});
-            }, 100);
-        }
-
-        // ============= INICIALIZAÇÃO =============
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.nav button').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -292,12 +171,7 @@
 
             document.getElementById('categorias').addEventListener('click', e => {
                 const btn = e.target.closest('.categoria');
-                if (btn) {
-                    currentCategory = btn.dataset.cat;
-                    document.querySelectorAll('.categoria').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    resetAndLoad();
-                }
+                if (btn) { currentCategory = btn.dataset.cat; resetAndLoad(); }
             });
 
             const searchInput = document.getElementById('busca');
@@ -305,54 +179,42 @@
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
                     const term = e.target.value.trim();
-                    if (term) performSearch(term);
-                    else if (currentMode === 'filmes') resetAndLoad();
+                    if (term) performSearch(term); else if (currentMode === 'filmes') resetAndLoad();
                 }, 500);
             });
 
             window.addEventListener('scroll', () => {
                 if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 400) {
-                    if (!isLoading && hasMore && currentMode === 'filmes' && !searchInput.value) {
-                        loadMore();
-                    }
+                    if (!isLoading && hasMore && currentMode === 'filmes' && !searchInput.value) loadMore();
                 }
             });
 
-            document.getElementById('modalClose').addEventListener('click', () => {
-                document.getElementById('modal').classList.remove('active');
-                document.getElementById('videoContainer').innerHTML = '';
-                if (currentPlayer) { currentPlayer.dispose(); currentPlayer = null; }
+            document.getElementById('detalhesBack').addEventListener('click', () => {
+                document.getElementById('detalhesPage').classList.remove('active');
             });
-            
-            document.getElementById('modal').addEventListener('click', e => {
-                if (e.target.classList.contains('modal')) {
-                    document.getElementById('modal').classList.remove('active');
-                    document.getElementById('videoContainer').innerHTML = '';
-                    if (currentPlayer) { currentPlayer.dispose(); currentPlayer = null; }
+
+            document.getElementById('btnAssistir').addEventListener('click', () => {
+                if (filmeAtual && filmeAtual.videoUrl) {
+                    window.open(filmeAtual.videoUrl, '_blank');
                 }
             });
 
-            document.getElementById('modalCopyBtn').addEventListener('click', () => {
-                if (currentVideoUrl) {
-                    navigator.clipboard?.writeText(currentVideoUrl).then(() => setStatus('📋 URL copiada!')).catch(() => prompt('Copie:', currentVideoUrl));
+            document.getElementById('btnAbrirNovaAba').addEventListener('click', () => {
+                if (filmeAtual && filmeAtual.videoUrl) {
+                    window.open(filmeAtual.videoUrl, '_blank');
                 }
-            });
-
-            document.getElementById('modalNewTabBtn').addEventListener('click', () => {
-                if (currentVideoUrl) { window.open(currentVideoUrl, '_blank'); setStatus('🔗 Nova aba'); }
-            });
-            
-            document.getElementById('clearMethodsBtn').addEventListener('click', () => {
-                document.getElementById('methodsStatus').textContent = '';
-            });
-
-            document.querySelectorAll('[data-method]').forEach(btn => {
-                btn.addEventListener('click', () => testMethod(btn.dataset.method));
             });
 
             document.getElementById('grid').addEventListener('click', e => {
                 const card = e.target.closest('.card');
-                if (card) openContent(card.dataset.id, card.dataset.title);
+                if (card) {
+                    if (currentMode === 'tv') {
+                        const url = card.dataset.url;
+                        if (url) window.open(url, '_blank');
+                    } else {
+                        openDetalhes(card.dataset.id);
+                    }
+                }
             });
 
             loadCategories();
@@ -365,9 +227,7 @@
                 const data = await res.json();
                 if (data.categorias && data.categorias.length) {
                     const container = document.getElementById('categorias');
-                    const allBtn = container.querySelector('[data-cat="0"]');
-                    container.innerHTML = '';
-                    container.appendChild(allBtn.cloneNode(true));
+                    container.innerHTML = '<button class="categoria active" data-cat="0"><i class="fas fa-star"></i> Todos</button>';
                     data.categorias.forEach(cat => {
                         const btn = document.createElement('button');
                         btn.className = 'categoria';
@@ -386,6 +246,8 @@
             hasMore = true;
             document.getElementById('loading').style.display = 'block';
             document.getElementById('grid').innerHTML = '';
+            setStatus('Carregando...');
+
             try {
                 let url = currentMode === 'filmes' ? `${API_BASE}/filmes?limit=50&offset=0&category=${currentCategory}` : `${API_BASE}/canais`;
                 const res = await fetch(url);
@@ -395,10 +257,8 @@
                 offset = items.length;
                 hasMore = currentMode === 'filmes' && items.length === 50;
                 setStatus(`${items.length} itens`);
-            } catch (e) {} finally {
-                isLoading = false;
-                document.getElementById('loading').style.display = 'none';
-            }
+            } catch (e) { setStatus('Erro ao carregar'); } 
+            finally { isLoading = false; document.getElementById('loading').style.display = 'none'; }
         }
 
         async function loadMore() {
@@ -430,41 +290,77 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.dataset.id = item.id;
-                card.dataset.title = item.titulo || item.title;
-                let thumbUrl = item.thumb || (currentMode === 'tv' ? (item.logo || item.cover || '') : '');
-                card.innerHTML = `<div class="thumb">${thumbUrl ? `<img src="${thumbUrl}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}<div class="fallback" style="display: ${thumbUrl ? 'none' : 'flex'}; width:100%; height:100%; align-items:center; justify-content:center;"><i class="fas fa-${currentMode === 'tv' ? 'tv' : 'film'}"></i></div></div><div class="info"><div class="titulo">${item.titulo || item.title || 'Sem título'}</div><div class="meta">${currentMode === 'tv' ? '<i class="fas fa-circle" style="color:#39FF14; font-size:8px;"></i> AO VIVO' : ''}${item.ano ? `<span><i class="far fa-calendar-alt"></i> ${item.ano}</span>` : ''}</div></div>`;
+                
+                let thumbUrl = item.thumb_horizontal || item.thumb || '';
+                
+                card.innerHTML = `
+                    <div class="thumb">
+                        ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+                        <div class="fallback" style="display: ${thumbUrl ? 'none' : 'flex'}; width:100%; height:100%; align-items:center; justify-content:center;">
+                            <i class="fas fa-${currentMode === 'tv' ? 'tv' : 'film'}"></i>
+                        </div>
+                        ${currentMode === 'tv' ? '<div class="live-badge"><i class="fas fa-circle"></i> AO VIVO</div>' : ''}
+                    </div>
+                    <div class="info">
+                        <div class="titulo">${item.titulo || 'Sem título'}</div>
+                        <div class="meta">${item.ano ? `<span><i class="far fa-calendar-alt"></i> ${item.ano}</span>` : ''}</div>
+                    </div>
+                `;
                 grid.appendChild(card);
             });
         }
 
-        async function openContent(id, title) {
+        async function openDetalhes(id) {
+            setStatus('Carregando detalhes...');
             try {
-                const endpoint = currentMode === 'filmes' ? `filme/${id}` : `canal/${id}`;
-                const res = await fetch(`${API_BASE}/${endpoint}`);
+                const res = await fetch(`${API_BASE}/filme/${id}`);
                 const data = await res.json();
-                const item = data.filme || data.canal;
+                const filme = data.filme;
                 
-                if (item && item.videoUrl) {
-                    currentVideoUrl = item.videoUrl;
-                    currentVideoTitle = item.titulo || title;
+                if (filme) {
+                    filmeAtual = filme;
                     
-                    document.getElementById('methodsUrl').textContent = currentVideoUrl;
-                    document.getElementById('methodsGrid').style.display = 'grid';
-                    document.getElementById('modalTitulo').textContent = currentVideoTitle;
+                    document.getElementById('detalhesCapa').src = filme.capa || filme.thumb || '';
+                    document.getElementById('detalhesTitulo').textContent = filme.titulo || '';
+                    document.getElementById('detalhesTituloOriginal').textContent = filme.titulo_original || '';
+                    document.getElementById('detalhesSinopse').textContent = filme.sinopse || 'Sinopse não disponível.';
                     
-                    // Tenta método 3 (srcdoc) primeiro
-                    testMethod('srcdoc');
+                    let metaHtml = '';
+                    if (filme.ano) metaHtml += `<span><i class="far fa-calendar-alt"></i> ${filme.ano}</span>`;
+                    if (filme.duracao) metaHtml += `<span><i class="far fa-clock"></i> ${filme.duracao}</span>`;
+                    if (filme.pais) metaHtml += `<span><i class="fas fa-globe"></i> ${filme.pais}</span>`;
+                    if (filme.is_serie) metaHtml += `<span><i class="fas fa-tv"></i> Série</span>`;
+                    document.getElementById('detalhesMeta').innerHTML = metaHtml;
+                    
+                    const elencoDiv = document.getElementById('detalhesElenco');
+                    elencoDiv.innerHTML = '';
+                    if (filme.atores && filme.atores.length) {
+                        filme.atores.forEach(ator => {
+                            const tag = document.createElement('span');
+                            tag.className = 'elenco-tag';
+                            tag.textContent = ator;
+                            elencoDiv.appendChild(tag);
+                        });
+                    } else { elencoDiv.innerHTML = '<span class="elenco-tag">Elenco não disponível</span>'; }
+                    
+                    const catDiv = document.getElementById('detalhesCategorias');
+                    catDiv.innerHTML = '';
+                    if (filme.categorias && filme.categorias.length) {
+                        filme.categorias.forEach(cat => {
+                            const tag = document.createElement('span');
+                            tag.className = 'categoria-tag';
+                            tag.textContent = cat;
+                            catDiv.appendChild(tag);
+                        });
+                    }
+                    
+                    document.getElementById('detalhesPage').classList.add('active');
+                    setStatus(`🎬 ${filme.titulo}`);
                 }
-            } catch (e) {}
+            } catch (e) { setStatus('Erro ao carregar detalhes'); }
         }
 
-        function resetAndLoad() {
-            offset = 0;
-            hasMore = true;
-            document.getElementById('grid').innerHTML = '';
-            document.getElementById('busca').value = '';
-            loadContent();
-        }
+        function resetAndLoad() { offset = 0; hasMore = true; document.getElementById('grid').innerHTML = ''; document.getElementById('busca').value = ''; loadContent(); }
     </script>
 </body>
 </html>
