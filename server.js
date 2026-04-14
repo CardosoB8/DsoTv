@@ -12,9 +12,12 @@ const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
 const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
 
-const ANDROID_HEADERS = {
-    'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 13; SM-G998B Build/TP1A.220624.014)',
-    'Accept': '*/*'
+// Headers para API de metadados (sem Referer e X-Requested-With)
+const API_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json',
+    'Accept-Language': 'pt-PT,pt;q=0.9,en;q=0.8',
+    'Connection': 'keep-alive'
 };
 
 app.use(cors());
@@ -58,11 +61,13 @@ async function callApi(endpoint, params = {}) {
     
     const url = `${API_BASE_URL}/${endpoint}?${urlParams.toString()}`;
     
+    console.log(`🌐 API: ${endpoint}`);
+    
     const response = await axios.get(url, {
         headers: {
             'X-Api-Key': 'bigzun.com',
             'Device-Id': DEVICE_ID,
-            ...ANDROID_HEADERS
+            ...API_HEADERS
         },
         timeout: 30000
     });
@@ -70,7 +75,7 @@ async function callApi(endpoint, params = {}) {
     return response.data;
 }
 
-// Cache
+// Cache simples
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -101,6 +106,7 @@ app.get('/api/categorias', async (req, res) => {
         setCached('categorias', result);
         res.json(result);
     } catch (e) {
+        console.error('Erro categorias:', e.message);
         res.json({ categorias: [] });
     }
 });
@@ -136,6 +142,7 @@ app.get('/api/filmes', async (req, res) => {
         setCached(cacheKey, result);
         res.json(result);
     } catch (e) {
+        console.error('Erro filmes:', e.message);
         res.json({ filmes: [] });
     }
 });
@@ -158,6 +165,7 @@ app.get('/api/canais', async (req, res) => {
         setCached('canais', result);
         res.json(result);
     } catch (e) {
+        console.error('Erro canais:', e.message);
         res.json({ canais: [] });
     }
 });
@@ -170,8 +178,7 @@ app.get('/api/filme/:id', async (req, res) => {
         const raw = data.data || {};
         let videoUrl = raw.media_url || raw.video_url || '';
         
-        // Não substitui o domínio - mantém original
-        // Apenas garante que começa com http
+        // Não substitui domínio, mantém original
         if (videoUrl && !videoUrl.startsWith('http')) {
             videoUrl = 'http://' + videoUrl;
         }
@@ -189,6 +196,7 @@ app.get('/api/filme/:id', async (req, res) => {
             }
         });
     } catch (e) {
+        console.error('Erro filme:', e.message);
         res.json({ filme: null });
     }
 });
@@ -207,6 +215,7 @@ app.get('/api/canal/:id', async (req, res) => {
         
         res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
     } catch (e) {
+        console.error('Erro canal:', e.message);
         res.json({ canal: null });
     }
 });
@@ -235,6 +244,7 @@ app.get('/api/buscar', async (req, res) => {
         
         res.json({ filmes });
     } catch (e) {
+        console.error('Erro busca:', e.message);
         res.json({ filmes: [] });
     }
 });
