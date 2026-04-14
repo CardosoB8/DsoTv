@@ -16,25 +16,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// ========== TIMESTAMP CORRIGIDO - AGORA COM UTC+2 (Maputo) ==========
 function generateTimestamp() {
     const now = new Date();
-    
-    // A API está em UTC+2 (horário de Maputo)
-    // Adiciona 2 horas ao UTC
     const maputoTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
-    
     const year = maputoTime.getUTCFullYear();
     const month = String(maputoTime.getUTCMonth() + 1).padStart(2, '0');
     const day = String(maputoTime.getUTCDate()).padStart(2, '0');
     const hours = String(maputoTime.getUTCHours()).padStart(2, '0');
     const minutes = String(maputoTime.getUTCMinutes()).padStart(2, '0');
     const seconds = String(maputoTime.getUTCSeconds()).padStart(2, '0');
-    
-    const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
-    
-    console.log('🕐 Timestamp gerado:', timestamp);
-    return timestamp;
+    return `${year}${month}${day}${hours}${minutes}${seconds}`;
 }
 
 function generateHash(timestamp) {
@@ -54,7 +45,6 @@ function fixVideoUrl(url) {
 function buildUrl(endpoint, params = {}) {
     const timestamp = generateTimestamp();
     const hash = generateHash(timestamp);
-    
     const urlParams = new URLSearchParams();
     urlParams.append('s', hash);
     urlParams.append('t', timestamp);
@@ -66,46 +56,43 @@ function buildUrl(endpoint, params = {}) {
     urlParams.append('revision', '173');
     urlParams.append('languageCode', 'pt');
     urlParams.append('countryCode', 'PT');
-    
     Object.entries(params).forEach(([k, v]) => urlParams.append(k, String(v)));
-    
     return `${API_BASE_URL}/${endpoint}?${urlParams.toString()}`;
 }
 
 async function callApi(endpoint, params = {}) {
     const url = buildUrl(endpoint, params);
-    
-    console.log('📤 URL:', url.substring(0, 200) + '...');
-    
-    try {
-        const response = await axios.get(url, {
-            headers: {
-                'X-Api-Key': 'bigzun.com',
-                'Device-Id': DEVICE_ID,
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'application/json'
-            },
-            timeout: 30000
-        });
-        
-        return { 
-            data: response.data, 
-            debug: { url, response: JSON.stringify(response.data).substring(0, 400) } 
-        };
-    } catch (error) {
-        console.error('❌ Erro:', error.message);
-        throw error;
-    }
+    const response = await axios.get(url, {
+        headers: {
+            'X-Api-Key': 'bigzun.com',
+            'Device-Id': DEVICE_ID,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json'
+        },
+        timeout: 30000
+    });
+    return response.data;
 }
 
-// ========== ENDPOINTS ==========
+// Cache simples
+const cache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
 
+function getCached(key) {
+    const cached = cache.get(key);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached.data;
+    return null;
+}
+function setCached(key, data) {
+    cache.set(key, { data, timestamp: Date.now() });
+}
+
+// Endpoints
 app.get('/api/filmes', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
         const categoryId = req.query.category || '0';
-        
         let endpoint, params;
         if (categoryId === '0') {
             endpoint = 'partner/content/getAllFilms';
@@ -114,63 +101,65 @@ app.get('/api/filmes', async (req, res) => {
             endpoint = 'partner/content/getFilmsByCategory';
             params = { category_id: categoryId, limit, offset };
         }
-        
-        const { data, debug } = await callApi(endpoint, params);
-        
+        const cacheKey = `filmes_${categoryId}_${limit}_${offset}`;
+        const cached = getCached(cacheKey);
+        if (cached) return res.json(cached);
+        const data = await callApi(endpoint, params);
         const filmes = (data.data || []).map(item => ({
             id: item.id,
             titulo: item.title || 'Sem título',
             thumb: item.thumb || ''
         }));
-        
-        res.json({ filmes, _debug: debug });
+        const result = { filmes };
+        setCached(cacheKey, result);
+        res.json(result);
     } catch (e) {
-        res.json({ filmes: [], _debug: { error: e.message } });
+        res.json({ filmes: [] });
     }
 });
 
 app.get('/api/categorias', async (req, res) => {
     try {
-        const { data, debug } = await callApi('partner/content/getFilmCategoryList', {});
-        
+        const cached = getCached('categorias');
+        if (cached) return res.json(cached);
+        const data = await callApi('partner/content/getFilmCategoryList', {});
         const categorias = (data.data || []).map(cat => ({
             id: cat.id,
             nome: cat.name || cat.title || 'Sem nome'
         }));
-        
-        res.json({ categorias, _debug: debug });
+        const result = { categorias };
+        setCached('categorias', result);
+        res.json(result);
     } catch (e) {
-        res.json({ categorias: [], _debug: { error: e.message } });
+        res.json({ categorias: [] });
     }
 });
 
 app.get('/api/canais', async (req, res) => {
     try {
-        const { data, debug } = await callApi('partner/content/getAllTV', { limit: 200 });
-        
+        const cached = getCached('canais');
+        if (cached) return res.json(cached);
+        const data = await callApi('partner/content/getAllTV', { limit: 200 });
         const canais = (data.data || []).map(canal => ({
             id: canal.id,
             titulo: canal.title || 'Sem nome',
-            thumb: canal.thumb || ''
+            thumb: canal.thumb || canal.logo || canal.cover || ''
         }));
-        
-        res.json({ canais, _debug: debug });
+        const result = { canais };
+        setCached('canais', result);
+        res.json(result);
     } catch (e) {
-        res.json({ canais: [], _debug: { error: e.message } });
+        res.json({ canais: [] });
     }
 });
 
 app.get('/api/filme/:id', async (req, res) => {
     try {
         const filmId = req.params.id;
-        const { data, debug } = await callApi('partner/content/getFilmDetail', { film_id: filmId });
-        
+        const data = await callApi('partner/content/getFilmDetail', { film_id: filmId });
         const raw = data.data || {};
         let videoUrl = raw.media_url || raw.video_url || '';
-        if (videoUrl) {
-            videoUrl = fixVideoUrl(videoUrl);
-        }
-        
+        if (videoUrl) videoUrl = fixVideoUrl(videoUrl);
         res.json({
             filme: {
                 id: raw.id || filmId,
@@ -181,31 +170,23 @@ app.get('/api/filme/:id', async (req, res) => {
                 pais: raw.nation || '',
                 descricao: (raw.description || '').replace(/<[^>]*>/g, ''),
                 videoUrl: videoUrl
-            },
-            _debug: debug
+            }
         });
     } catch (e) {
-        res.json({ filme: null, _debug: { error: e.message } });
+        res.json({ filme: null });
     }
 });
 
 app.get('/api/canal/:id', async (req, res) => {
     try {
         const tvId = req.params.id;
-        const { data, debug } = await callApi('partner/content/playTelevision', { tv_id: tvId });
-        
+        const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
         const raw = data.data || {};
-        let videoUrl = raw.stream_url || raw.url || '';
-        if (videoUrl && !videoUrl.startsWith('http')) {
-            videoUrl = 'http://' + videoUrl;
-        }
-        
-        res.json({ 
-            canal: { id: tvId, titulo: raw.title || '', videoUrl },
-            _debug: debug
-        });
+        let videoUrl = raw.stream_url || raw.url || raw.media_url || '';
+        if (videoUrl && !videoUrl.startsWith('http')) videoUrl = 'http://' + videoUrl;
+        res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
     } catch (e) {
-        res.json({ canal: null, _debug: { error: e.message } });
+        res.json({ canal: null });
     }
 });
 
@@ -213,12 +194,9 @@ app.get('/api/buscar', async (req, res) => {
     try {
         const q = req.query.q || '';
         if (!q) return res.json({ filmes: [] });
-        
-        const { data, debug } = await callApi('app/search', { keyword: q, limit: 50 });
-        
+        const data = await callApi('app/search', { keyword: q, limit: 50 });
         const filmes = [];
         const rawData = data.data || [];
-        
         for (const section of rawData) {
             if (section.lists) {
                 for (const item of section.lists) {
@@ -230,10 +208,9 @@ app.get('/api/buscar', async (req, res) => {
                 }
             }
         }
-        
-        res.json({ filmes, _debug: debug });
+        res.json({ filmes });
     } catch (e) {
-        res.json({ filmes: [], _debug: { error: e.message } });
+        res.json({ filmes: [] });
     }
 });
 
@@ -244,5 +221,5 @@ app.get('*', (req, res) => {
 if (process.env.VERCEL) {
     module.exports = app;
 } else {
-    app.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));
+    app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 }
