@@ -12,6 +12,15 @@ const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
 const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
 
+// Headers que imitam um dispositivo Android
+const ANDROID_HEADERS = {
+    'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 13; SM-G998B Build/TP1A.220624.014)',
+    'Accept': '*/*',
+    'Accept-Encoding': 'gzip, deflate',
+    'Connection': 'keep-alive',
+    'X-Requested-With': 'com.movtv.modnew'
+};
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
@@ -33,18 +42,10 @@ function generateHash(timestamp) {
     return crypto.createHash('sha256').update(hashString).digest('hex');
 }
 
-function fixVideoUrl(url) {
-    if (!url) return '';
-    let fixed = url.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
-    if (!fixed.startsWith('http://') && !fixed.startsWith('https://')) {
-        fixed = 'http://' + fixed;
-    }
-    return fixed;
-}
-
-function buildUrl(endpoint, params = {}) {
+async function callApi(endpoint, params = {}) {
     const timestamp = generateTimestamp();
     const hash = generateHash(timestamp);
+    
     const urlParams = new URLSearchParams();
     urlParams.append('s', hash);
     urlParams.append('t', timestamp);
@@ -56,25 +57,24 @@ function buildUrl(endpoint, params = {}) {
     urlParams.append('revision', '173');
     urlParams.append('languageCode', 'pt');
     urlParams.append('countryCode', 'PT');
+    
     Object.entries(params).forEach(([k, v]) => urlParams.append(k, String(v)));
-    return `${API_BASE_URL}/${endpoint}?${urlParams.toString()}`;
-}
-
-async function callApi(endpoint, params = {}) {
-    const url = buildUrl(endpoint, params);
+    
+    const url = `${API_BASE_URL}/${endpoint}?${urlParams.toString()}`;
+    
     const response = await axios.get(url, {
         headers: {
             'X-Api-Key': 'bigzun.com',
             'Device-Id': DEVICE_ID,
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Accept': 'application/json'
+            ...ANDROID_HEADERS
         },
         timeout: 30000
     });
+    
     return response.data;
 }
 
-// Cache simples
+// Cache
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -83,50 +83,24 @@ function getCached(key) {
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) return cached.data;
     return null;
 }
+
 function setCached(key, data) {
     cache.set(key, { data, timestamp: Date.now() });
 }
 
-// Endpoints
-app.get('/api/filmes', async (req, res) => {
-    try {
-        const limit = parseInt(req.query.limit) || 50;
-        const offset = parseInt(req.query.offset) || 0;
-        const categoryId = req.query.category || '0';
-        let endpoint, params;
-        if (categoryId === '0') {
-            endpoint = 'partner/content/getAllFilms';
-            params = { limit, offset };
-        } else {
-            endpoint = 'partner/content/getFilmsByCategory';
-            params = { category_id: categoryId, limit, offset };
-        }
-        const cacheKey = `filmes_${categoryId}_${limit}_${offset}`;
-        const cached = getCached(cacheKey);
-        if (cached) return res.json(cached);
-        const data = await callApi(endpoint, params);
-        const filmes = (data.data || []).map(item => ({
-            id: item.id,
-            titulo: item.title || 'Sem título',
-            thumb: item.thumb || ''
-        }));
-        const result = { filmes };
-        setCached(cacheKey, result);
-        res.json(result);
-    } catch (e) {
-        res.json({ filmes: [] });
-    }
-});
+// ============= ENDPOINTS DE METADADOS =============
 
 app.get('/api/categorias', async (req, res) => {
     try {
         const cached = getCached('categorias');
         if (cached) return res.json(cached);
+        
         const data = await callApi('partner/content/getFilmCategoryList', {});
         const categorias = (data.data || []).map(cat => ({
             id: cat.id,
             nome: cat.name || cat.title || 'Sem nome'
         }));
+        
         const result = { categorias };
         setCached('categorias', result);
         res.json(result);
@@ -135,16 +109,55 @@ app.get('/api/categorias', async (req, res) => {
     }
 });
 
+app.get('/api/filmes', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = parseInt(req.query.offset) || 0;
+        const categoryId = req.query.category || '0';
+        
+        let endpoint, params;
+        if (categoryId === '0') {
+            endpoint = 'partner/content/getAllFilms';
+            params = { limit, offset };
+        } else {
+            endpoint = 'partner/content/getFilmsByCategory';
+            params = { category_id: categoryId, limit, offset };
+        }
+        
+        const cacheKey = `filmes_${categoryId}_${limit}_${offset}`;
+        const cached = getCached(cacheKey);
+        if (cached) return res.json(cached);
+        
+        const data = await callApi(endpoint, params);
+        const filmes = (data.data || []).map(item => ({
+            id: item.id,
+            titulo: item.title || 'Sem título',
+            thumb: item.thumb || '',
+            ano: item.year || ''
+        }));
+        
+        const result = { filmes };
+        setCached(cacheKey, result);
+        res.json(result);
+    } catch (e) {
+        res.json({ filmes: [] });
+    }
+});
+
 app.get('/api/canais', async (req, res) => {
     try {
         const cached = getCached('canais');
         if (cached) return res.json(cached);
+        
         const data = await callApi('partner/content/getAllTV', { limit: 200 });
         const canais = (data.data || []).map(canal => ({
             id: canal.id,
             titulo: canal.title || 'Sem nome',
-            thumb: canal.thumb || canal.logo || canal.cover || ''
+            thumb: canal.thumb || '',
+            logo: canal.logo || '',
+            cover: canal.cover || ''
         }));
+        
         const result = { canais };
         setCached('canais', result);
         res.json(result);
@@ -157,9 +170,17 @@ app.get('/api/filme/:id', async (req, res) => {
     try {
         const filmId = req.params.id;
         const data = await callApi('partner/content/getFilmDetail', { film_id: filmId });
+        
         const raw = data.data || {};
         let videoUrl = raw.media_url || raw.video_url || '';
-        if (videoUrl) videoUrl = fixVideoUrl(videoUrl);
+        
+        // 🔥 IMPORTANTE: Criar uma URL proxy para o vídeo
+        if (videoUrl) {
+            // Codifica a URL original para passar como parâmetro
+            const encodedUrl = Buffer.from(videoUrl).toString('base64');
+            videoUrl = `/api/stream/video/${encodedUrl}`;
+        }
+        
         res.json({
             filme: {
                 id: raw.id || filmId,
@@ -181,9 +202,16 @@ app.get('/api/canal/:id', async (req, res) => {
     try {
         const tvId = req.params.id;
         const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
+        
         const raw = data.data || {};
         let videoUrl = raw.stream_url || raw.url || raw.media_url || '';
-        if (videoUrl && !videoUrl.startsWith('http')) videoUrl = 'http://' + videoUrl;
+        
+        // 🔥 IMPORTANTE: Criar uma URL proxy para o stream
+        if (videoUrl) {
+            const encodedUrl = Buffer.from(videoUrl).toString('base64');
+            videoUrl = `/api/stream/live/${encodedUrl}`;
+        }
+        
         res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
     } catch (e) {
         res.json({ canal: null });
@@ -194,23 +222,120 @@ app.get('/api/buscar', async (req, res) => {
     try {
         const q = req.query.q || '';
         if (!q) return res.json({ filmes: [] });
+        
         const data = await callApi('app/search', { keyword: q, limit: 50 });
         const filmes = [];
         const rawData = data.data || [];
+        
         for (const section of rawData) {
             if (section.lists) {
                 for (const item of section.lists) {
                     filmes.push({
                         id: item.id,
                         titulo: item.title || '',
-                        thumb: item.thumb || item.cover || ''
+                        thumb: item.thumb || item.cover || '',
+                        ano: item.year || ''
                     });
                 }
             }
         }
+        
         res.json({ filmes });
     } catch (e) {
         res.json({ filmes: [] });
+    }
+});
+
+// ============= PROXY DE STREAM (A CHAVE!) =============
+
+// Proxy para stream de vídeo (filmes)
+app.get('/api/stream/video/:encodedUrl', async (req, res) => {
+    try {
+        const videoUrl = Buffer.from(req.params.encodedUrl, 'base64').toString('utf8');
+        
+        console.log('🎬 Proxying video stream:', videoUrl.substring(0, 80) + '...');
+        
+        // Fazer requisição para o stream com headers de Android
+        const response = await axios({
+            method: 'get',
+            url: videoUrl,
+            headers: {
+                ...ANDROID_HEADERS,
+                'Referer': 'http://api.movtv.co.mz/',
+                'Origin': 'http://api.movtv.co.mz'
+            },
+            responseType: 'stream',
+            timeout: 0 // Sem timeout para streams
+        });
+        
+        // Copiar headers relevantes
+        res.setHeader('Content-Type', response.headers['content-type'] || 'video/mp4');
+        res.setHeader('Accept-Ranges', 'bytes');
+        
+        if (response.headers['content-length']) {
+            res.setHeader('Content-Length', response.headers['content-length']);
+        }
+        
+        // Suporte a range requests (seek)
+        const range = req.headers.range;
+        if (range) {
+            res.setHeader('Content-Range', response.headers['content-range'] || `bytes */${response.headers['content-length']}`);
+        }
+        
+        // Pipe o stream para a resposta
+        response.data.pipe(res);
+        
+        response.data.on('error', (err) => {
+            console.error('Stream error:', err);
+            if (!res.headersSent) {
+                res.status(500).send('Stream error');
+            }
+        });
+        
+    } catch (error) {
+        console.error('Proxy stream error:', error.message);
+        if (!res.headersSent) {
+            res.status(500).send('Error proxying stream');
+        }
+    }
+});
+
+// Proxy para stream ao vivo (TV)
+app.get('/api/stream/live/:encodedUrl', async (req, res) => {
+    try {
+        const streamUrl = Buffer.from(req.params.encodedUrl, 'base64').toString('utf8');
+        
+        console.log('📺 Proxying live stream:', streamUrl.substring(0, 80) + '...');
+        
+        const response = await axios({
+            method: 'get',
+            url: streamUrl,
+            headers: {
+                ...ANDROID_HEADERS,
+                'Referer': 'http://api.movtv.co.mz/',
+                'Origin': 'http://api.movtv.co.mz'
+            },
+            responseType: 'stream',
+            timeout: 0
+        });
+        
+        res.setHeader('Content-Type', response.headers['content-type'] || 'application/vnd.apple.mpegurl');
+        res.setHeader('Accept-Ranges', 'bytes');
+        
+        response.data.pipe(res);
+        
+        response.data.on('error', (err) => {
+            console.error('Live stream error:', err);
+            if (!res.headersSent) {
+                res.status(500).send('Stream error');
+            }
+        });
+        
+    } catch (error) {
+        console.error('Proxy live stream error:', error.message);
+        if (!res.headersSent) {
+            res.status(500).send('Error proxying stream');
+        }
     }
 });
 
@@ -221,5 +346,5 @@ app.get('*', (req, res) => {
 if (process.env.VERCEL) {
     module.exports = app;
 } else {
-    app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+    app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
 }
