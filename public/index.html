@@ -3,129 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DSO TV - DEBUG</title>
+    <title>DSO TV - DIRETO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: monospace; background: #0F1C2E; color: #fff; min-height: 100vh; padding-bottom: 300px; }
-        
-        /* Header */
-        .header { background: #1A2D42; padding: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; }
+        body { font-family: Arial, sans-serif; background: #0F1C2E; color: #fff; min-height: 100vh; padding-bottom: 300px; }
+        .header { background: #1A2D42; padding: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .logo { font-size: 20px; font-weight: bold; color: #E50914; }
         .nav { display: flex; gap: 8px; }
-        .nav button { background: none; border: none; color: #B0BEC5; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; }
+        .nav button { background: none; border: none; color: #B0BEC5; padding: 8px 16px; border-radius: 20px; cursor: pointer; }
         .nav button.active { background: #E50914; color: #fff; }
         .search { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 8px 15px; display: flex; align-items: center; margin-left: auto; }
         .search input { background: none; border: none; color: #fff; outline: none; width: 150px; }
-        
-        /* Categorias */
         .categorias { padding: 12px; display: flex; gap: 8px; overflow-x: auto; }
         .categoria { background: #1A2D42; border: none; color: #B0BEC5; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
         .categoria.active { background: #E50914; color: #fff; }
-        
-        /* Grid */
         .grid { padding: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .card { background: #1A2D42; border-radius: 12px; overflow: hidden; cursor: pointer; }
         .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; background: #0a1520; }
         .card .info { padding: 10px; }
         .card .titulo { font-size: 12px; font-weight: bold; }
-        
-        /* Loading */
         .loading { text-align: center; padding: 20px; color: #B0BEC5; }
-        
-        /* Modal Player */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
         .modal.active { display: flex; align-items: center; justify-content: center; }
         .modal-content { width: 95%; max-width: 800px; background: #0F1C2E; border-radius: 16px; overflow: hidden; }
         .modal-header { padding: 15px; background: #1A2D42; display: flex; justify-content: space-between; }
         .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
         .video-container { aspect-ratio: 16/9; background: #000; }
-        #modalInfo { padding: 15px; color: #B0BEC5; font-size: 12px; max-height: 100px; overflow-y: auto; }
+        #modalInfo { padding: 15px; color: #B0BEC5; font-size: 12px; }
         
-        /* ========== PAINEL DE DEBUG ========== */
-        .debug-panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #0a0a0a;
-            border-top: 3px solid #E50914;
-            max-height: 280px;
-            overflow-y: auto;
-            font-family: monospace;
-            font-size: 11px;
-            z-index: 999;
-        }
-        
-        .debug-header {
-            background: #1A2D42;
-            padding: 8px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-        }
-        
+        .debug-panel { position: fixed; bottom: 0; left: 0; right: 0; background: #0a0a0a; border-top: 3px solid #E50914; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 11px; z-index: 999; }
+        .debug-header { background: #1A2D42; padding: 8px 12px; display: flex; justify-content: space-between; }
         .debug-header h3 { color: #E50914; font-size: 14px; }
-        .debug-header button { background: #E50914; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        
         .debug-content { padding: 10px; }
-        
-        .debug-item {
-            margin-bottom: 15px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 10px;
-        }
-        
-        .debug-url {
-            background: #1a1a1a;
-            padding: 8px;
-            border-radius: 4px;
-            word-break: break-all;
-            color: #64B5F6;
-            margin-bottom: 5px;
-        }
-        
-        .debug-response {
-            background: #0a2a0a;
-            padding: 8px;
-            border-radius: 4px;
-            word-break: break-all;
-            color: #4CAF50;
-            max-height: 100px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        
-        .debug-error {
-            background: #2a0a0a;
-            color: #f44336;
-            padding: 8px;
-            border-radius: 4px;
-        }
-        
-        .debug-time {
-            color: #888;
-            font-size: 10px;
-            margin-bottom: 3px;
-        }
-        
-        .status-bar {
-            background: #1A2D42;
-            padding: 6px 12px;
-            font-size: 12px;
-            display: flex;
-            justify-content: space-between;
-        }
-        
+        .debug-item { margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 8px; }
+        .debug-url { background: #1a1a1a; padding: 5px; border-radius: 4px; color: #64B5F6; word-break: break-all; }
+        .debug-response { background: #0a2a0a; padding: 5px; border-radius: 4px; color: #4CAF50; }
+        .debug-error { background: #2a0a0a; color: #f44336; }
+        .status-bar { background: #1A2D42; padding: 6px 12px; display: flex; justify-content: space-between; }
         @media (min-width: 768px) { .grid { grid-template-columns: repeat(4, 1fr); } }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo"><i class="fas fa-play-circle"></i> DSO TV DEBUG</div>
+        <div class="logo"><i class="fas fa-play-circle"></i> DSO TV DIRETO</div>
         <div class="nav">
             <button class="active" data-mode="filmes"><i class="fas fa-film"></i> Filmes</button>
             <button data-mode="tv"><i class="fas fa-tv"></i> TV</button>
@@ -156,96 +78,114 @@
         </div>
     </div>
     
-    <!-- PAINEL DE DEBUG -->
     <div class="debug-panel" id="debugPanel">
         <div class="debug-header">
-            <h3><i class="fas fa-bug"></i> DEBUG - REQUISIÇÕES</h3>
-            <button id="clearDebug">Limpar</button>
+            <h3><i class="fas fa-bug"></i> DEBUG - CHAMADA DIRETA</h3>
+            <button id="clearDebug" style="background:#E50914;color:#fff;border:none;padding:4px 12px;border-radius:4px;">Limpar</button>
         </div>
-        <div class="debug-content" id="debugContent">
-            <div style="color:#888;text-align:center;padding:20px;">Aguardando requisições...</div>
-        </div>
+        <div class="debug-content" id="debugContent">Aguardando...</div>
         <div class="status-bar">
             <span id="debugStatus">🟢 Online</span>
-            <span id="debugCount">0 requisições</span>
+            <span id="debugCount">0</span>
         </div>
     </div>
 
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
+        // ========== CONFIGURAÇÕES DIRETAS ==========
+        const API_BASE = "http://api.movtv.co.mz";
+        const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
+        const MSISDN = "865446574";
+        const SECRET = "mCotB+*f>SYyO@8Em";
+        
+        // ========== FUNÇÕES DE AUTENTICAÇÃO ==========
+        function generateTimestamp() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            return `${year}${month}${day}${hours}${minutes}${seconds}`;
+        }
+        
+        function generateHash(timestamp) {
+            const hashString = `${timestamp}|${SECRET}|${MSISDN}|${DEVICE_ID}|android`;
+            return CryptoJS.SHA256(hashString).toString();
+        }
+        
+        function buildUrl(endpoint, params = {}) {
+            const timestamp = generateTimestamp();
+            const hash = generateHash(timestamp);
+            
+            const urlParams = new URLSearchParams();
+            urlParams.append('s', hash);
+            urlParams.append('t', timestamp);
+            urlParams.append('os', 'android');
+            urlParams.append('language', 'pt');
+            urlParams.append('msisdn', MSISDN);
+            urlParams.append('did', DEVICE_ID);
+            urlParams.append('clientType', 'Android');
+            urlParams.append('revision', '173');
+            urlParams.append('languageCode', 'pt');
+            urlParams.append('countryCode', 'PT');
+            
+            Object.entries(params).forEach(([k, v]) => urlParams.append(k, String(v)));
+            
+            return `${API_BASE}/${endpoint}?${urlParams.toString()}`;
+        }
+        
+        function fixVideoUrl(url) {
+            if (!url) return '';
+            let fixed = url.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
+            if (!fixed.startsWith('http')) fixed = 'http://' + fixed;
+            return fixed;
+        }
+        
         // ========== DEBUG ==========
-        let debugRequests = [];
         let requestCount = 0;
+        const debugItems = [];
         
         function addDebug(url, response, isError = false) {
             requestCount++;
             const time = new Date().toLocaleTimeString();
+            debugItems.unshift({ time, url, response: JSON.stringify(response).substring(0, 400), isError });
+            if (debugItems.length > 15) debugItems.pop();
             
-            const item = {
-                time,
-                url,
-                response: typeof response === 'string' ? response : JSON.stringify(response, null, 2),
-                isError
-            };
-            
-            debugRequests.unshift(item);
-            if (debugRequests.length > 20) debugRequests.pop();
-            
-            renderDebug();
-            document.getElementById('debugCount').textContent = requestCount + ' requisições';
-        }
-        
-        function renderDebug() {
-            const container = document.getElementById('debugContent');
-            
-            if (debugRequests.length === 0) {
-                container.innerHTML = '<div style="color:#888;text-align:center;padding:20px;">Aguardando requisições...</div>';
-                return;
-            }
-            
-            container.innerHTML = debugRequests.map(item => `
+            const content = document.getElementById('debugContent');
+            content.innerHTML = debugItems.map(d => `
                 <div class="debug-item">
-                    <div class="debug-time">${item.time}</div>
-                    <div class="debug-url">📤 ${item.url}</div>
-                    <div class="debug-response ${item.isError ? 'debug-error' : ''}">📥 ${item.response.substring(0, 500)}${item.response.length > 500 ? '...' : ''}</div>
+                    <div style="color:#888;font-size:10px;">${d.time}</div>
+                    <div class="debug-url">📤 ${d.url.substring(0, 100)}...</div>
+                    <div class="${d.isError ? 'debug-error' : 'debug-response'}">📥 ${d.response}</div>
                 </div>
             `).join('');
+            
+            document.getElementById('debugCount').textContent = requestCount;
         }
         
         document.getElementById('clearDebug').addEventListener('click', () => {
-            debugRequests = [];
+            debugItems.length = 0;
             requestCount = 0;
-            renderDebug();
-            document.getElementById('debugCount').textContent = '0 requisições';
+            document.getElementById('debugContent').innerHTML = 'Aguardando...';
+            document.getElementById('debugCount').textContent = '0';
         });
         
-        // Wrapper do fetch com debug
-        async function debugFetch(url, options = {}) {
-            const fullUrl = window.location.origin + url;
+        async function directCall(endpoint, params = {}) {
+            const url = buildUrl(endpoint, params);
             
             try {
-                const res = await fetch(url, options);
-                const text = await res.text();
-                
-                let data;
-                try {
-                    data = JSON.parse(text);
-                } catch {
-                    data = text;
-                }
-                
-                // Mostra no debug
-                addDebug(fullUrl, data);
-                
-                // Atualiza status
-                const status = document.getElementById('debugStatus');
-                status.innerHTML = res.ok ? '🟢 Online' : '🟡 ' + res.status;
-                
-                return { ok: res.ok, data };
-            } catch (error) {
-                addDebug(fullUrl, 'ERRO: ' + error.message, true);
-                document.getElementById('debugStatus').innerHTML = '🔴 Erro';
-                throw error;
+                const res = await fetch(url, {
+                    headers: { 'X-Api-Key': 'bigzun.com', 'Device-Id': DEVICE_ID }
+                });
+                const data = await res.json();
+                addDebug(url, data);
+                return data;
+            } catch (e) {
+                addDebug(url, { error: e.message }, true);
+                throw e;
             }
         }
         
@@ -254,15 +194,11 @@
         let categoria = '0';
         let offset = 0;
         let carregando = false;
-        let temMais = true;
         let player = null;
-        
-        function setStatus(m) { /* não usado mais */ }
         
         document.addEventListener('DOMContentLoaded', () => {
             player = videojs('player');
-            
-            addDebug('🎬 APLICATIVO INICIADO', 'Modo: ' + modo);
+            addDebug('🚀 INICIO', 'App iniciado - Chamada DIRETA à API');
             
             document.querySelectorAll('.nav button').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -270,7 +206,6 @@
                     document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     document.getElementById('categorias').style.display = modo === 'filmes' ? 'flex' : 'none';
-                    addDebug('🔄 MODO ALTERADO', 'Modo: ' + modo);
                     resetar();
                 });
             });
@@ -281,7 +216,6 @@
                     categoria = btn.dataset.cat;
                     document.querySelectorAll('.categoria').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    addDebug('📂 CATEGORIA', 'ID: ' + categoria);
                     resetar();
                 }
             });
@@ -293,14 +227,6 @@
                     if (e.target.value) buscar(e.target.value);
                     else if (modo === 'filmes') carregar();
                 }, 500);
-            });
-            
-            window.addEventListener('scroll', () => {
-                if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400) {
-                    if (!carregando && temMais && modo === 'filmes' && !document.getElementById('busca').value) {
-                        carregarMais();
-                    }
-                }
             });
             
             document.getElementById('modalClose').addEventListener('click', () => {
@@ -319,26 +245,24 @@
         
         async function carregarCategorias() {
             try {
-                const { data } = await debugFetch('/api/categorias');
-                if (data.categorias) {
+                const data = await directCall('partner/content/getFilmCategoryList');
+                if (data.data) {
                     const container = document.getElementById('categorias');
                     const allBtn = container.querySelector('[data-cat="0"]');
                     container.innerHTML = '';
                     container.appendChild(allBtn.cloneNode(true));
                     
-                    data.categorias.forEach(c => {
+                    data.data.forEach(c => {
                         const btn = document.createElement('button');
                         btn.className = 'categoria';
                         btn.dataset.cat = c.id;
-                        btn.innerHTML = `<i class="fas fa-folder"></i> ${c.nome}`;
+                        btn.innerHTML = `<i class="fas fa-folder"></i> ${c.name || c.title}`;
                         container.appendChild(btn);
                     });
                     
-                    addDebug('✅ CATEGORIAS', data.categorias.length + ' categorias carregadas');
+                    addDebug('✅ CATEGORIAS', data.data.length);
                 }
-            } catch (e) {
-                addDebug('❌ ERRO CATEGORIAS', e.message, true);
-            }
+            } catch (e) {}
         }
         
         async function carregar() {
@@ -348,87 +272,73 @@
             document.getElementById('loading').style.display = 'block';
             
             try {
-                const url = modo === 'filmes' 
-                    ? `/api/filmes?limit=50&offset=0&category=${categoria}`
-                    : '/api/canais';
+                let endpoint, params;
                 
-                const { data } = await debugFetch(url);
-                const itens = data.filmes || data.canais || [];
+                if (modo === 'filmes') {
+                    if (categoria === '0') {
+                        endpoint = 'partner/content/getAllFilms';
+                        params = { limit: 50, offset: 0 };
+                    } else {
+                        endpoint = 'partner/content/getFilmsByCategory';
+                        params = { category_id: categoria, limit: 50, offset: 0 };
+                    }
+                } else {
+                    endpoint = 'partner/content/getAllTV';
+                    params = { limit: 200 };
+                }
                 
-                addDebug('📦 ITENS RECEBIDOS', itens.length + ' itens');
+                const data = await directCall(endpoint, params);
+                const itens = data.data || [];
                 
+                addDebug('📦 ITENS', itens.length);
                 renderizar(itens, true);
                 offset = itens.length;
-                temMais = itens.length === 50;
-            } catch (e) {
-                addDebug('❌ ERRO', e.message, true);
-            } finally {
+            } catch (e) {} finally {
                 carregando = false;
                 document.getElementById('loading').style.display = 'none';
             }
         }
         
-        async function carregarMais() {
-            if (carregando || !temMais) return;
-            carregando = true;
-            
-            try {
-                const url = `/api/filmes?limit=50&offset=${offset}&category=${categoria}`;
-                const { data } = await debugFetch(url);
-                const itens = data.filmes || [];
-                
-                if (itens.length) {
-                    renderizar(itens, false);
-                    offset += itens.length;
-                    temMais = itens.length === 50;
-                    addDebug('📦 MAIS ITENS', itens.length + ' itens (total: ' + offset + ')');
-                } else {
-                    temMais = false;
-                }
-            } catch (e) {} finally {
-                carregando = false;
-            }
-        }
-        
         async function buscar(q) {
             document.getElementById('grid').innerHTML = '';
-            
             try {
-                const url = `/api/buscar?q=${encodeURIComponent(q)}`;
-                const { data } = await debugFetch(url);
+                const data = await directCall('app/search', { keyword: q, limit: 50 });
+                const filmes = [];
                 
-                if (data.filmes) {
-                    renderizar(data.filmes, true);
-                    addDebug('🔍 BUSCA', data.filmes.length + ' resultados para "' + q + '"');
+                if (data.data) {
+                    data.data.forEach(s => {
+                        if (s.lists) s.lists.forEach(i => filmes.push({ id: i.id, titulo: i.title, thumb: i.thumb }));
+                    });
                 }
+                
+                renderizar(filmes, true);
+                addDebug('🔍 BUSCA', filmes.length);
             } catch (e) {}
         }
         
         async function abrir(id) {
             try {
-                const url = modo === 'filmes' ? `/api/filme/${id}` : `/api/canal/${id}`;
-                const { data } = await debugFetch(url);
-                const item = data.filme || data.canal;
+                const endpoint = modo === 'filmes' ? 'partner/content/getFilmDetail' : 'partner/content/playTelevision';
+                const param = modo === 'filmes' ? { film_id: id } : { tv_id: id };
                 
-                if (item && item.videoUrl) {
-                    document.getElementById('modalTitulo').textContent = item.titulo || '';
-                    document.getElementById('modalInfo').innerHTML = `
-                        ${item.ano ? '📅 ' + item.ano : ''} 
-                        ${item.duracao ? '⏱️ ' + item.duracao : ''}
-                        ${item.descricao ? '<br><br>' + item.descricao.substring(0, 150) + '...' : ''}
-                        <br><br>🎥 ${item.videoUrl.substring(0, 60)}...
-                    `;
-                    player.src({ src: item.videoUrl, type: item.videoUrl.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' });
+                const data = await directCall(endpoint, param);
+                const raw = data.data || {};
+                
+                let videoUrl = modo === 'filmes' ? (raw.media_url || raw.video_url) : (raw.stream_url || raw.url);
+                videoUrl = fixVideoUrl(videoUrl);
+                
+                if (videoUrl) {
+                    document.getElementById('modalTitulo').textContent = raw.title || '';
+                    document.getElementById('modalInfo').innerHTML = `🎥 ${videoUrl.substring(0, 60)}...`;
+                    player.src({ src: videoUrl, type: videoUrl.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' });
                     document.getElementById('modal').classList.add('active');
-                    
-                    addDebug('▶️ PLAYER', 'Tocando: ' + item.titulo);
+                    addDebug('▶️ PLAYER', raw.title);
                 } else {
-                    addDebug('❌ VÍDEO', 'URL não encontrada', true);
+                    addDebug('❌ SEM VÍDEO', id, true);
                     alert('Vídeo não disponível');
                 }
             } catch (e) {
-                addDebug('❌ ERRO PLAYER', e.message, true);
-                alert('Erro ao abrir');
+                addDebug('❌ ERRO', e.message, true);
             }
         }
         
@@ -441,32 +351,26 @@
                 card.className = 'card';
                 card.dataset.id = item.id;
                 card.innerHTML = `
-                    ${item.thumb ? `<img src="${item.thumb}" onerror="this.style.display='none'">` : '<div style="aspect-ratio:2/3;background:#0a1520;"></div>'}
+                    ${item.thumb ? `<img src="${item.thumb}" onerror="this.style.display='none'">` : ''}
                     <div class="info">
-                        <div class="titulo">${item.titulo || ''}</div>
-                        <div style="font-size:9px;color:#64B5F6;margin-top:3px;">ID: ${item.id}</div>
+                        <div class="titulo">${item.title || item.titulo || ''}</div>
+                        <div style="font-size:9px;color:#64B5F6;">ID: ${item.id}</div>
                     </div>
                 `;
                 grid.appendChild(card);
                 
-                // Log do primeiro item
                 if (i === 0 && limpar) {
-                    addDebug('📋 PRIMEIRO ITEM', JSON.stringify(item, null, 2).substring(0, 300));
+                    addDebug('📋 EXEMPLO', item);
                 }
             });
         }
         
         function resetar() {
             offset = 0;
-            temMais = true;
             document.getElementById('grid').innerHTML = '';
             document.getElementById('busca').value = '';
             carregar();
         }
-        
-        // Expor para debug manual
-        window.debugFetch = debugFetch;
-        window.addDebug = addDebug;
     </script>
 </body>
 </html>
