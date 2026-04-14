@@ -16,19 +16,25 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// ========== TIMESTAMP CORRIGIDO (UTC) ==========
+// ========== TIMESTAMP CORRIGIDO - AGORA COM UTC+2 (Maputo) ==========
 function generateTimestamp() {
     const now = new Date();
     
-    // Usa UTC para evitar problemas de fuso horário
-    const year = now.getUTCFullYear();
-    const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(now.getUTCDate()).padStart(2, '0');
-    const hours = String(now.getUTCHours()).padStart(2, '0');
-    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+    // A API está em UTC+2 (horário de Maputo)
+    // Adiciona 2 horas ao UTC
+    const maputoTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
     
-    return `${year}${month}${day}${hours}${minutes}${seconds}`;
+    const year = maputoTime.getUTCFullYear();
+    const month = String(maputoTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(maputoTime.getUTCDate()).padStart(2, '0');
+    const hours = String(maputoTime.getUTCHours()).padStart(2, '0');
+    const minutes = String(maputoTime.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(maputoTime.getUTCSeconds()).padStart(2, '0');
+    
+    const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
+    
+    console.log('🕐 Timestamp gerado:', timestamp);
+    return timestamp;
 }
 
 function generateHash(timestamp) {
@@ -231,7 +237,6 @@ app.get('/api/buscar', async (req, res) => {
     }
 });
 
-// Rota catch-all para o frontend
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
