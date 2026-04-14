@@ -12,13 +12,9 @@ const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
 const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
 
-// Headers que imitam um dispositivo Android
 const ANDROID_HEADERS = {
     'User-Agent': 'Dalvik/2.1.0 (Linux; U; Android 13; SM-G998B Build/TP1A.220624.014)',
-    'Accept': '*/*',
-    'Accept-Encoding': 'gzip, deflate',
-    'Connection': 'keep-alive',
-    'X-Requested-With': 'com.movtv.modnew'
+    'Accept': '*/*'
 };
 
 app.use(cors());
@@ -88,7 +84,7 @@ function setCached(key, data) {
     cache.set(key, { data, timestamp: Date.now() });
 }
 
-// ============= ENDPOINTS DE METADADOS =============
+// ============= ENDPOINTS =============
 
 app.get('/api/categorias', async (req, res) => {
     try {
@@ -174,11 +170,10 @@ app.get('/api/filme/:id', async (req, res) => {
         const raw = data.data || {};
         let videoUrl = raw.media_url || raw.video_url || '';
         
-        // 🔥 IMPORTANTE: Criar uma URL proxy para o vídeo
-        if (videoUrl) {
-            // Codifica a URL original para passar como parâmetro
-            const encodedUrl = Buffer.from(videoUrl).toString('base64');
-            videoUrl = `/api/stream/video/${encodedUrl}`;
+        // Não substitui o domínio - mantém original
+        // Apenas garante que começa com http
+        if (videoUrl && !videoUrl.startsWith('http')) {
+            videoUrl = 'http://' + videoUrl;
         }
         
         res.json({
@@ -206,10 +201,8 @@ app.get('/api/canal/:id', async (req, res) => {
         const raw = data.data || {};
         let videoUrl = raw.stream_url || raw.url || raw.media_url || '';
         
-        // 🔥 IMPORTANTE: Criar uma URL proxy para o stream
-        if (videoUrl) {
-            const encodedUrl = Buffer.from(videoUrl).toString('base64');
-            videoUrl = `/api/stream/live/${encodedUrl}`;
+        if (videoUrl && !videoUrl.startsWith('http')) {
+            videoUrl = 'http://' + videoUrl;
         }
         
         res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
@@ -243,99 +236,6 @@ app.get('/api/buscar', async (req, res) => {
         res.json({ filmes });
     } catch (e) {
         res.json({ filmes: [] });
-    }
-});
-
-// ============= PROXY DE STREAM (A CHAVE!) =============
-
-// Proxy para stream de vídeo (filmes)
-app.get('/api/stream/video/:encodedUrl', async (req, res) => {
-    try {
-        const videoUrl = Buffer.from(req.params.encodedUrl, 'base64').toString('utf8');
-        
-        console.log('🎬 Proxying video stream:', videoUrl.substring(0, 80) + '...');
-        
-        // Fazer requisição para o stream com headers de Android
-        const response = await axios({
-            method: 'get',
-            url: videoUrl,
-            headers: {
-                ...ANDROID_HEADERS,
-                'Referer': 'http://api.movtv.co.mz/',
-                'Origin': 'http://api.movtv.co.mz'
-            },
-            responseType: 'stream',
-            timeout: 0 // Sem timeout para streams
-        });
-        
-        // Copiar headers relevantes
-        res.setHeader('Content-Type', response.headers['content-type'] || 'video/mp4');
-        res.setHeader('Accept-Ranges', 'bytes');
-        
-        if (response.headers['content-length']) {
-            res.setHeader('Content-Length', response.headers['content-length']);
-        }
-        
-        // Suporte a range requests (seek)
-        const range = req.headers.range;
-        if (range) {
-            res.setHeader('Content-Range', response.headers['content-range'] || `bytes */${response.headers['content-length']}`);
-        }
-        
-        // Pipe o stream para a resposta
-        response.data.pipe(res);
-        
-        response.data.on('error', (err) => {
-            console.error('Stream error:', err);
-            if (!res.headersSent) {
-                res.status(500).send('Stream error');
-            }
-        });
-        
-    } catch (error) {
-        console.error('Proxy stream error:', error.message);
-        if (!res.headersSent) {
-            res.status(500).send('Error proxying stream');
-        }
-    }
-});
-
-// Proxy para stream ao vivo (TV)
-app.get('/api/stream/live/:encodedUrl', async (req, res) => {
-    try {
-        const streamUrl = Buffer.from(req.params.encodedUrl, 'base64').toString('utf8');
-        
-        console.log('📺 Proxying live stream:', streamUrl.substring(0, 80) + '...');
-        
-        const response = await axios({
-            method: 'get',
-            url: streamUrl,
-            headers: {
-                ...ANDROID_HEADERS,
-                'Referer': 'http://api.movtv.co.mz/',
-                'Origin': 'http://api.movtv.co.mz'
-            },
-            responseType: 'stream',
-            timeout: 0
-        });
-        
-        res.setHeader('Content-Type', response.headers['content-type'] || 'application/vnd.apple.mpegurl');
-        res.setHeader('Accept-Ranges', 'bytes');
-        
-        response.data.pipe(res);
-        
-        response.data.on('error', (err) => {
-            console.error('Live stream error:', err);
-            if (!res.headersSent) {
-                res.status(500).send('Stream error');
-            }
-        });
-        
-    } catch (error) {
-        console.error('Proxy live stream error:', error.message);
-        if (!res.headersSent) {
-            res.status(500).send('Error proxying stream');
-        }
     }
 });
 
