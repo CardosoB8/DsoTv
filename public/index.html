@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 🔥 SOLUÇÃO MIXED CONTENT -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>DSO TV</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Video.js -->
@@ -237,12 +239,9 @@
                 const url = card.dataset.url;
                 const type = card.dataset.type;
                 
-                console.log('Click:', {type, id, title, url});
-                
                 if (type === 'filme') {
                     openDetalhes(id);
                 } else if (type === 'tv-movtv') {
-                    // Para TV MOVTV, buscar URL primeiro
                     fetchTVMOVTVUrl(id, title);
                 } else if (type === 'tv-iptv') {
                     if (url) playVideo(url, title);
@@ -261,7 +260,6 @@
                 const canal = data.canal;
                 
                 if (canal && canal.videoUrl) {
-                    console.log('TV MOVTV URL:', canal.videoUrl);
                     window.open(canal.videoUrl, '_blank');
                     setStatus(`Abrindo ${title} em nova aba`);
                 } else {
@@ -269,7 +267,6 @@
                     setStatus('Canal indisponivel');
                 }
             } catch (e) {
-                console.error('Erro:', e);
                 alert('Erro ao carregar canal');
                 setStatus('Erro ao carregar');
             }
@@ -285,8 +282,6 @@
         }
 
         function playVideo(url, title) {
-            console.log('playVideo:', url, title);
-            
             closePlayer();
             
             document.getElementById('playerTitle').textContent = title || 'Reproduzindo';
@@ -295,7 +290,6 @@
             const container = document.getElementById('playerContainer');
             const videoElement = document.createElement('video');
             videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
-            videoElement.setAttribute('data-setup', '{}');
             container.appendChild(videoElement);
             
             videoPlayer = videojs(videoElement, {
@@ -304,9 +298,7 @@
                 preload: 'auto',
                 fluid: true,
                 html5: {
-                    hls: { overrideNative: true },
-                    nativeAudioTracks: false,
-                    nativeVideoTracks: false
+                    hls: { overrideNative: true }
                 }
             });
             
@@ -318,7 +310,7 @@
             videoPlayer.on('error', () => {
                 const error = videoPlayer.error();
                 console.error('Video.js error:', error);
-                setStatus('Erro ao reproduzir: ' + (error ? error.message : 'desconhecido'));
+                setStatus('Erro ao reproduzir - tente abrir em nova aba');
             });
             
             setStatus('Reproduzindo: ' + (title || 'video'));
@@ -378,7 +370,8 @@
             const data = await res.json();
             const items = data.filmes || [];
             
-            let html = '<div class="section-title"><i class="fas fa-film"></i> Filmes</div><div class="grid">';
+            let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
+            html += '<div class="section-title"><i class="fas fa-film"></i> Filmes</div><div class="grid">';
             items.forEach(item => {
                 html += createCard(item, 'filme');
             });
@@ -397,7 +390,8 @@
             const data = await res.json();
             const items = data.canais || [];
             
-            let html = '<div class="section-title"><i class="fas fa-tv"></i> Canais MOVTV (abre em nova aba)</div><div class="grid tv-mode">';
+            let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
+            html += '<div class="section-title"><i class="fas fa-tv"></i> Canais MOVTV (abre em nova aba)</div><div class="grid tv-mode">';
             items.forEach(item => {
                 html += createCard(item, 'tv-movtv');
             });
@@ -420,7 +414,7 @@
                 categorias[cat].push(item);
             });
             
-            let html = '';
+            let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
             const nomesCategorias = {
                 'esportes': 'Esportes',
                 'noticias': 'Noticias',
@@ -501,7 +495,8 @@
                 const data = await res.json();
                 const items = data.filmes || [];
                 
-                let html = '<div class="section-title"><i class="fas fa-search"></i> Resultados</div><div class="grid">';
+                let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
+                html += '<div class="section-title"><i class="fas fa-search"></i> Resultados</div><div class="grid">';
                 items.forEach(item => {
                     html += createCard(item, 'filme');
                 });
