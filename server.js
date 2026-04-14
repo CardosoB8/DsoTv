@@ -60,7 +60,7 @@ async function callApi(endpoint, params = {}) {
     
     const url = `${API_BASE_URL}/${endpoint}?${urlParams.toString()}`;
     
-    console.log(`🌐 API: ${endpoint}`);
+    console.log(`API: ${endpoint}`);
     
     const response = await axios.get(url, {
         headers: {
@@ -88,6 +88,77 @@ function setCached(key, data) {
     cache.set(key, { data, timestamp: Date.now() });
 }
 
+// ============= NOVOS CANAIS IPTV (COM LOGOS LIMPOS) =============
+const canaisIPTV = [
+    { nome: "Cartoon Network", url: "https://stm.sinalmycn.com/24003/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/Cartoon%20Network.png", categoria: "infantil" },
+    { nome: "TNT", url: "https://stm.sinalmycn.com/13039/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/TNT.png", categoria: "filmes-series" },
+    { nome: "ESPN", url: "https://stm.sinalmycn.com/22001/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/ESPN.png", categoria: "esportes" },
+    { nome: "ESPN 2", url: "https://stm.sinalmycn.com/22004/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/ESPN2.png", categoria: "esportes" },
+    { nome: "ESPN 3", url: "https://stm.sinalmycn.com/22007/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/ESPN3.png", categoria: "esportes" },
+    { nome: "ESPN 4", url: "https://stm.sinalmycn.com/22010/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/ESPN4.png", categoria: "esportes" },
+    { nome: "ESPN 5", url: "https://stm.sinalmycn.com/22013/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/ESPN5.png", categoria: "esportes" },
+    { nome: "ESPN 6", url: "https://stm.sinalmycn.com/22016/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/ESPN6.png", categoria: "esportes" },
+    { nome: "Band Sports", url: "https://stm.sinalmycn.com/19001/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 1", url: "https://stm.sinalmycn.com/20000/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 2", url: "https://stm.sinalmycn.com/20003/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 3", url: "https://stm.sinalmycn.com/20006/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 4", url: "https://stm.sinalmycn.com/20010/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 5", url: "https://stm.sinalmycn.com/20012/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 6", url: "https://stm.sinalmycn.com/20015/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 7", url: "https://stm.sinalmycn.com/20018/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Premiere 8", url: "https://stm.sinalmycn.com/20022/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Caze TV 1", url: "https://stm.sinalmycn.com/19068/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Caze TV 2", url: "https://stm.sinalmycn.com/19069/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Paramount+ 1", url: "https://stm.sinalmycn.com/19071/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Paramount+ 2", url: "https://stm.sinalmycn.com/19072/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Paramount+ 3", url: "https://stm.sinalmycn.com/19073/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Paramount+ 4", url: "https://stm.sinalmycn.com/19074/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Nosso Futebol 1", url: "https://stm.sinalmycn.com/19024/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Nosso Futebol 2", url: "https://stm.sinalmycn.com/19025/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "Nosso Futebol 3", url: "https://stm.sinalmycn.com/19026/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "esportes" },
+    { nome: "CNN Brasil", url: "https://stm.sinalmycn.com/25005/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/CNN.png", categoria: "noticias" },
+    { nome: "Band News", url: "https://stm.sinalmycn.com/25001/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "noticias" },
+    { nome: "Globo News", url: "https://stm.sinalmycn.com/25007/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "noticias" },
+    { nome: "JP News", url: "https://stm.sinalmycn.com/25022/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "noticias" },
+    { nome: "SBT News", url: "https://stm.sinalmycn.com/25022/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "noticias" },
+    { nome: "Discovery", url: "https://stm.sinalmycn.com/23030/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "documentario" },
+    { nome: "Discovery World", url: "https://stm.sinalmycn.com/23018/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "documentario" },
+    { nome: "Discovery Theater", url: "https://stm.sinalmycn.com/23015/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "documentario" },
+    { nome: "Discovery Channel", url: "https://stm.sinalmycn.com/23009/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "documentario" },
+    { nome: "Discovery Science", url: "https://stm.sinalmycn.com/23012/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/Discovery%20Science.png", categoria: "documentario" },
+    { nome: "Discovery H&H", url: "https://stm.sinalmycn.com/12012/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "documentario" },
+    { nome: "Discovery Turbo", url: "https://stm.sinalmycn.com/12015/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "documentario" },
+    { nome: "History", url: "https://stm.sinalmycn.com/23027/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "documentario" },
+    { nome: "Animal Planet", url: "https://stm.sinalmycn.com/23000/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/Animal%20Planet.png", categoria: "documentario" },
+    { nome: "Gloob", url: "https://stm.sinalmycn.com/24015/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "infantil" },
+    { nome: "Box Kids", url: "https://stm.sinalmycn.com/24000/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "infantil" },
+    { nome: "Discovery Kids", url: "https://stm.sinalmycn.com/24009/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "infantil" },
+    { nome: "Cartoonito", url: "https://stm.sinalmycn.com/24006/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "infantil" },
+    { nome: "Nicktoon", url: "https://stmv2.srvif.com/nicktoons/nicktoons/playlist.m3u8", logo: "", categoria: "infantil" },
+    { nome: "HBO", url: "https://stm.sinalmycn.com/14000/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO.png", categoria: "filmes-series" },
+    { nome: "HBO 2", url: "https://stm.sinalmycn.com/14003/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO%202.png", categoria: "filmes-series" },
+    { nome: "HBO Family", url: "https://stm.sinalmycn.com/14006/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO%20Family.png", categoria: "filmes-series" },
+    { nome: "HBO Signature", url: "https://stm.sinalmycn.com/14018/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO%20Signature.png", categoria: "filmes-series" },
+    { nome: "HBO Plus", url: "https://stm.sinalmycn.com/14012/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO%20Plus.png", categoria: "filmes-series" },
+    { nome: "HBO Mundi", url: "https://stm.sinalmycn.com/14009/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO%20Mundi.png", categoria: "filmes-series" },
+    { nome: "HBO Pop", url: "https://stm.sinalmycn.com/14015/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO%20Pop.png", categoria: "filmes-series" },
+    { nome: "HBO Xtreme", url: "https://stm.sinalmycn.com/14021/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/HBO%20Xtreme.png", categoria: "filmes-series" },
+    { nome: "Space", url: "https://stm.sinalmycn.com/13027/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/SPACE.png", categoria: "filmes-series" },
+    { nome: "Warner Channel", url: "https://stm.sinalmycn.com/13051/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/Warner%20Channel.png", categoria: "filmes-series" },
+    { nome: "Sony Channel", url: "https://stm.sinalmycn.com/13021/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "filmes-series" },
+    { nome: "Sony Movies", url: "https://stm.sinalmycn.com/13024/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "filmes-series" },
+    { nome: "AXN", url: "https://stm.sinalmycn.com/13003/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/AXN.png", categoria: "filmes-series" },
+    { nome: "AMC", url: "https://stm.sinalmycn.com/13000/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "filmes-series" },
+    { nome: "A&E", url: "https://stm.sinalmycn.com/12000/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "filmes-series" },
+    { nome: "Cinemax", url: "https://stm.sinalmycn.com/13009/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/Cinemax.png", categoria: "filmes-series" },
+    { nome: "Studio Universal", url: "https://stm.sinalmycn.com/13048/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/Studio%20Universal.png", categoria: "filmes-series" },
+    { nome: "TNT Novelas", url: "https://stm.sinalmycn.com/13036/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "variedades" },
+    { nome: "Globoplay Novelas", url: "https://stm.sinalmycn.com/12060/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "variedades" },
+    { nome: "Multishow", url: "https://stm.sinalmycn.com/12045/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "https://piratetv.app/wp-content/themes/piratetv5v/assets/images/canais/Multishow.png", categoria: "variedades" },
+    { nome: "Food Network", url: "https://stm.sinalmycn.com/12024/video.m3u8?token=EkP2qSi13ckjQRLSIDoxI5rMZsF5rZyEYzqWjxD248ScEUPYQ0", logo: "", categoria: "variedades" },
+    { nome: "Novelissima", url: "https://cis-no-samsung.otteravision.com/cis/no/no_h265.m3u8", logo: "", categoria: "variedades" }
+];
+
 // ============= ENDPOINTS =============
 
 app.get('/api/categorias', async (req, res) => {
@@ -98,8 +169,7 @@ app.get('/api/categorias', async (req, res) => {
         const data = await callApi('partner/content/getFilmCategoryList', {});
         const categorias = (data.data || []).map(cat => ({
             id: cat.id,
-            nome: cat.name || cat.title || 'Sem nome',
-            imagem: cat.image_url || ''
+            nome: cat.name || cat.title || 'Sem nome'
         }));
         
         const result = { categorias };
@@ -132,7 +202,7 @@ app.get('/api/filmes', async (req, res) => {
         const data = await callApi(endpoint, params);
         const filmes = (data.data || []).map(item => ({
             id: item.id,
-            titulo: item.title || 'Sem título',
+            titulo: item.title || 'Sem titulo',
             thumb: item.thumb || '',
             thumb_horizontal: item.thumb_horizontal || '',
             ano: item.published_year || item.year || ''
@@ -146,9 +216,9 @@ app.get('/api/filmes', async (req, res) => {
     }
 });
 
-app.get('/api/canais', async (req, res) => {
+app.get('/api/canais-movtv', async (req, res) => {
     try {
-        const cached = getCached('canais');
+        const cached = getCached('canais-movtv');
         if (cached) return res.json(cached);
         
         const data = await callApi('partner/content/getAllTV', { limit: 200 });
@@ -159,11 +229,15 @@ app.get('/api/canais', async (req, res) => {
         }));
         
         const result = { canais };
-        setCached('canais', result);
+        setCached('canais-movtv', result);
         res.json(result);
     } catch (e) {
         res.json({ canais: [] });
     }
+});
+
+app.get('/api/canais-iptv', (req, res) => {
+    res.json({ canais: canaisIPTV });
 });
 
 app.get('/api/filme/:id', async (req, res) => {
@@ -174,16 +248,12 @@ app.get('/api/filme/:id', async (req, res) => {
         const raw = data.data || {};
         let videoUrl = raw.media_url || '';
         
-        // Substituir domínio para filmes
         if (videoUrl) {
             videoUrl = videoUrl.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz');
             if (!videoUrl.startsWith('http')) videoUrl = 'http://' + videoUrl;
         }
         
-        // Extrair atores
         const atores = (raw.actors || []).map(a => a.title || a.name).filter(Boolean);
-        
-        // Extrair categorias
         const categorias = (raw.category || []).map(c => c.title || c.name).filter(Boolean);
         
         res.json({
@@ -208,7 +278,7 @@ app.get('/api/filme/:id', async (req, res) => {
     }
 });
 
-app.get('/api/canal/:id', async (req, res) => {
+app.get('/api/canal-movtv/:id', async (req, res) => {
     try {
         const tvId = req.params.id;
         const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
@@ -216,18 +286,11 @@ app.get('/api/canal/:id', async (req, res) => {
         const raw = data.data || {};
         let videoUrl = raw.media_url || raw.stream_url || raw.url || '';
         
-        // NÃO substituir domínio para TV
         if (videoUrl && !videoUrl.startsWith('http')) {
             videoUrl = 'http://' + videoUrl;
         }
         
-        res.json({ 
-            canal: { 
-                id: tvId, 
-                titulo: raw.title || '', 
-                videoUrl: videoUrl
-            } 
-        });
+        res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
     } catch (e) {
         res.json({ canal: null });
     }
@@ -261,31 +324,6 @@ app.get('/api/buscar', async (req, res) => {
     }
 });
 
-// Página de player para redirecionamento
-app.get('/player', (req, res) => {
-    const url = req.query.url || '';
-    const title = req.query.title || 'DSO TV';
-    
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <title>${title}</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { background: #000; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-                video { width: 100%; height: 100vh; object-fit: contain; }
-            </style>
-        </head>
-        <body>
-            <video controls autoplay playsinline src="${url}"></video>
-        </body>
-        </html>
-    `);
-});
-
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -293,5 +331,5 @@ app.get('*', (req, res) => {
 if (process.env.VERCEL) {
     module.exports = app;
 } else {
-    app.listen(PORT, () => console.log(`🚀 Servidor rodando na porta ${PORT}`));
+    app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 }
