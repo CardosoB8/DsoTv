@@ -153,13 +153,24 @@ app.get('/api/canais', async (req, res) => {
         if (cached) return res.json(cached);
         
         const data = await callApi('partner/content/getAllTV', { limit: 200 });
-        const canais = (data.data || []).map(canal => ({
-            id: canal.id,
-            titulo: canal.title || 'Sem nome',
-            thumb: canal.thumb || '',
-            logo: canal.logo || '',
-            cover: canal.cover || ''
-        }));
+        
+        const canais = (data.data || []).map(canal => {
+            // Exatamente como o APK faz
+            let thumbUrl = '';
+            if (canal.thumb && canal.thumb.trim() && !canal.thumb.includes('null')) {
+                thumbUrl = canal.thumb;
+            } else if (canal.logo && canal.logo.trim()) {
+                thumbUrl = canal.logo;
+            } else if (canal.cover && canal.cover.trim()) {
+                thumbUrl = canal.cover;
+            }
+            
+            return {
+                id: canal.id,
+                titulo: canal.title || 'Sem nome',
+                thumb: thumbUrl
+            };
+        });
         
         const result = { canais };
         setCached('canais', result);
@@ -207,11 +218,15 @@ app.get('/api/canal/:id', async (req, res) => {
         const data = await callApi('partner/content/playTelevision', { tv_id: tvId });
         
         const raw = data.data || {};
+        // NÃO substitui domínio para TV - exatamente como no APK!
         let videoUrl = raw.stream_url || raw.url || raw.media_url || '';
         
+        // Apenas garante que começa com http
         if (videoUrl && !videoUrl.startsWith('http')) {
             videoUrl = 'http://' + videoUrl;
         }
+        
+        console.log('📺 TV Stream URL:', videoUrl);
         
         res.json({ canal: { id: tvId, titulo: raw.title || '', videoUrl } });
     } catch (e) {
