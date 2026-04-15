@@ -7,7 +7,6 @@
     <meta name="referrer" content="no-referrer">
     <title>DSO TV</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #0F1C2E; color: #FFFFFF; min-height: 100vh; padding-bottom: 40px; }
@@ -68,19 +67,11 @@
         .elenco-tag { background: #1A2D42; padding: 6px 12px; border-radius: 16px; color: #FFF; font-size: 12px; }
         .detalhes-categorias { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
         .categoria-tag { background: rgba(100,181,246,0.15); color: #64B5F6; padding: 5px 12px; border-radius: 16px; font-size: 11px; }
-        .player-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; }
-        .player-modal.active { display: flex; flex-direction: column; }
-        .player-header { padding: 10px 14px; background: #1A2D42; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-        .player-header h3 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; color: #FFF; }
-        .player-close { background: none; border: none; color: #FFFFFF; font-size: 22px; cursor: pointer; }
-        .player-container { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; }
-        .player-container iframe { width: 100%; height: 100%; border: none; }
-        .player-container .video-js { width: 100%; height: 100%; }
-        .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 6px 16px; font-size: 11px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
         .ad-container { display: flex; justify-content: center; padding: 6px; }
         .ad-placeholder { background: linear-gradient(135deg, #1A2D42, #2A3D52); border: 1px dashed #64B5F6; border-radius: 8px; padding: 10px; text-align: center; color: #B0BEC5; font-size: 11px; width: 100%; }
         .ad-banner { background: linear-gradient(135deg, #2A3D52, #1A2D42); border: 1px solid #64B5F6; border-radius: 12px; padding: 15px; margin: 10px 0; text-align: center; color: #FFF; }
         .ad-banner i { color: #E50914; margin-right: 8px; }
+        .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 6px 16px; font-size: 11px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
         @media (min-width: 768px) { 
             .grid { grid-template-columns: repeat(5, 1fr); } 
             .grid.tv-mode { grid-template-columns: repeat(3, 1fr); } 
@@ -94,8 +85,8 @@
         <div class="logo" onclick="location.reload()"><i class="fas fa-play-circle"></i> DSO TV</div>
         <div class="nav">
             <button class="active" data-mode="filmes"><i class="fas fa-film"></i> Filmes</button>
-            <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV MOVTV</button>
-            <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV IPTV</button>
+            <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV DSO</button>
+            <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV ARSADM</button>
         </div>
         <div class="search">
             <i class="fas fa-search"></i>
@@ -103,7 +94,6 @@
         </div>
     </div>
     
-    <!-- Ad no topo -->
     <div class="ad-container">
         <div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade - Anuncie aqui</div>
     </div>
@@ -122,7 +112,6 @@
             <div class="detalhes-capa-overlay"></div>
         </div>
         <div class="detalhes-content">
-            <!-- Ad dentro dos detalhes -->
             <div class="ad-banner">
                 <i class="fas fa-ad"></i> Publicidade - Assista com qualidade
             </div>
@@ -132,10 +121,9 @@
             <div class="detalhes-meta" id="detalhesMeta"></div>
             <div class="detalhes-botoes">
                 <button class="btn-primary" id="btnAbrirNovaAba"><i class="fas fa-external-link-alt"></i> Abrir em Nova Aba</button>
-                <button class="btn-secondary" id="btnAssistirNativo"><i class="fas fa-play"></i> Player Nativo</button>
+                <button class="btn-secondary" id="btnAssistirRedirect"><i class="fas fa-play"></i> Assistir via Redirect</button>
             </div>
             
-            <!-- Ad entre botões e sinopse -->
             <div class="ad-banner" style="background: linear-gradient(135deg, #3A4D62, #2A3D52);">
                 <i class="fas fa-film"></i> Promoção: Filmes em destaque
             </div>
@@ -150,19 +138,10 @@
             </div>
             <div class="detalhes-categorias" id="detalhesCategorias"></div>
             
-            <!-- Ad no final dos detalhes -->
             <div class="ad-banner">
                 <i class="fas fa-tv"></i> Canais AO VIVO disponíveis!
             </div>
         </div>
-    </div>
-    
-    <div class="player-modal" id="playerModal">
-        <div class="player-header">
-            <h3 id="playerTitle">Reproduzindo</h3>
-            <button class="player-close" id="playerClose">&times;</button>
-        </div>
-        <div class="player-container" id="playerContainer"></div>
     </div>
     
     <div class="status-bar">
@@ -170,7 +149,6 @@
         <span><i class="fas fa-wifi"></i> DSO TV</span>
     </div>
 
-    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
     <script>
         const API_BASE = '/api';
         let currentMode = 'filmes';
@@ -180,7 +158,6 @@
         let hasMore = true;
         let searchTimeout = null;
         let filmeAtual = null;
-        let videoPlayer = null;
 
         function setStatus(text) { document.getElementById('statusMsg').textContent = text; }
 
@@ -202,7 +179,12 @@
 
             document.getElementById('categorias').addEventListener('click', e => {
                 const btn = e.target.closest('.categoria');
-                if (btn) { currentCategory = btn.dataset.cat; resetAndLoad(); }
+                if (btn) { 
+                    currentCategory = btn.dataset.cat; 
+                    document.querySelectorAll('.categoria').forEach(c => c.classList.remove('active'));
+                    btn.classList.add('active');
+                    resetAndLoad(); 
+                }
             });
 
             const searchInput = document.getElementById('busca');
@@ -224,7 +206,6 @@
                 document.getElementById('detalhesPage').classList.remove('active');
             });
 
-            // 🔥 BOTÃO PRINCIPAL: Abrir em Nova Aba
             document.getElementById('btnAbrirNovaAba').addEventListener('click', () => {
                 if (filmeAtual && filmeAtual.videoUrl) {
                     window.open(filmeAtual.videoUrl, '_blank');
@@ -232,16 +213,12 @@
                 }
             });
 
-            // 🔥 BOTÃO SECUNDÁRIO: Player Nativo do Chrome
-            document.getElementById('btnAssistirNativo').addEventListener('click', () => {
+            document.getElementById('btnAssistirRedirect').addEventListener('click', () => {
                 if (filmeAtual && filmeAtual.videoUrl) {
-                    playNativo(filmeAtual.videoUrl, filmeAtual.titulo);
+                    const redirectUrl = `${API_BASE}/redirect?url=${encodeURIComponent(filmeAtual.videoUrl)}`;
+                    window.open(redirectUrl, '_blank');
+                    setStatus(`Redirecionando: ${filmeAtual.titulo}`);
                 }
-            });
-
-            document.getElementById('playerClose').addEventListener('click', closePlayer);
-            document.getElementById('playerModal').addEventListener('click', e => {
-                if (e.target.classList.contains('player-modal')) closePlayer();
             });
 
             document.getElementById('contentContainer').addEventListener('click', e => {
@@ -258,7 +235,10 @@
                 } else if (type === 'tv-movtv') {
                     fetchTVMOVTVUrl(id, title);
                 } else if (type === 'tv-iptv') {
-                    if (url) playNativo(url, title);
+                    if (url) {
+                        const redirectUrl = `${API_BASE}/redirect?url=${encodeURIComponent(url)}`;
+                        window.open(redirectUrl, '_blank');
+                    }
                 }
             });
 
@@ -273,117 +253,11 @@
                 const data = await res.json();
                 const canal = data.canal;
                 if (canal && canal.videoUrl) {
-                    window.open(canal.videoUrl, '_blank');
+                    const redirectUrl = `${API_BASE}/redirect?url=${encodeURIComponent(canal.videoUrl)}`;
+                    window.open(redirectUrl, '_blank');
                     setStatus(`Abrindo ${title}`);
                 } else { alert('Canal indisponivel'); }
             } catch (e) { alert('Erro ao carregar'); }
-        }
-
-        function closePlayer() {
-            if (videoPlayer) { videoPlayer.dispose(); videoPlayer = null; }
-            document.getElementById('playerModal').classList.remove('active');
-            document.getElementById('playerContainer').innerHTML = '';
-        }
-
-        // 🔥 PLAYER NATIVO DO CHROME (usando a tag <video> nativa)
-        function playNativo(url, title) {
-            closePlayer();
-            document.getElementById('playerTitle').textContent = title || 'Reproduzindo';
-            document.getElementById('playerModal').classList.add('active');
-            
-            const container = document.getElementById('playerContainer');
-            
-            // Usa a tag <video> nativa do HTML5 (Chrome player nativo)
-            const videoElement = document.createElement('video');
-            videoElement.controls = true;
-            videoElement.autoplay = true;
-            videoElement.style.width = '100%';
-            videoElement.style.height = '100%';
-            videoElement.style.objectFit = 'contain';
-            videoElement.setAttribute('playsinline', '');
-            videoElement.setAttribute('webkit-playsinline', '');
-            
-            // Criar source element
-            const source = document.createElement('source');
-            source.src = url;
-            
-            // Detectar tipo de vídeo
-            if (url.includes('.m3u8') || url.includes('.m3u')) {
-                source.type = 'application/vnd.apple.mpegurl';
-                // Para HLS nativo no Chrome (funciona em iOS/Safari, Chrome precisa de hls.js)
-                if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-                    // Safari/iOS suporta nativamente
-                    source.type = 'application/vnd.apple.mpegurl';
-                } else {
-                    // Chrome/Android usa HLS.js
-                    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                        const hls = new Hls();
-                        hls.loadSource(url);
-                        hls.attachMedia(videoElement);
-                        videoElement.play().catch(e => console.log('Autoplay prevented'));
-                    } else {
-                        // Fallback para Video.js
-                        usarVideoJS(url, title);
-                        return;
-                    }
-                }
-            } else {
-                source.type = 'video/mp4';
-            }
-            
-            videoElement.appendChild(source);
-            container.appendChild(videoElement);
-            
-            // Tentar reproduzir
-            videoElement.play().catch(e => {
-                console.log('Autoplay prevented, user interaction needed');
-            });
-            
-            videoElement.addEventListener('error', (e) => {
-                console.error('Erro no player nativo:', e);
-                setStatus('Erro no player nativo - tentando player alternativo...');
-                // Fallback para Video.js
-                container.innerHTML = '';
-                usarVideoJS(url, title);
-            });
-            
-            setStatus('Reproduzindo (Player Nativo): ' + title);
-        }
-        
-        // Fallback usando Video.js
-        function usarVideoJS(url, title) {
-            closePlayer();
-            document.getElementById('playerTitle').textContent = title || 'Reproduzindo';
-            document.getElementById('playerModal').classList.add('active');
-            
-            const container = document.getElementById('playerContainer');
-            const videoElement = document.createElement('video');
-            videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
-            container.appendChild(videoElement);
-            
-            videoPlayer = videojs(videoElement, { 
-                controls: true, 
-                autoplay: true, 
-                preload: 'auto', 
-                fluid: true,
-                html5: { 
-                    hls: { overrideNative: true },
-                    nativeVideoTracks: false,
-                    nativeAudioTracks: false,
-                    nativeTextTracks: false
-                }
-            });
-            
-            videoPlayer.ready(() => { 
-                videoPlayer.src({ 
-                    src: url, 
-                    type: url.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' 
-                }); 
-                videoPlayer.play().catch(e => {}); 
-            });
-            
-            videoPlayer.on('error', () => setStatus('Erro - tente novamente'));
-            setStatus('Reproduzindo (Video.js): ' + title);
         }
 
         async function loadCategories() {
@@ -393,7 +267,7 @@
                 if (data.categorias && data.categorias.length) {
                     const container = document.getElementById('categorias');
                     container.innerHTML = '<button class="categoria active" data-cat="0"><i class="fas fa-star"></i> Todos</button>';
-                    data.categorias.slice(0, 15).forEach(cat => {
+                    data.categorias.slice(0, 25).forEach(cat => {
                         const btn = document.createElement('button');
                         btn.className = 'categoria'; btn.dataset.cat = cat.id;
                         btn.innerHTML = `<i class="fas fa-folder"></i> ${cat.nome}`;
@@ -424,10 +298,7 @@
             let html = '<div class="section-title"><i class="fas fa-film"></i> Filmes</div><div class="grid">';
             items.forEach(item => { html += createCard(item, 'filme'); });
             html += '</div>';
-            
-            // Ad entre seções
             html += '<div class="ad-container" style="margin-top: 10px;"><div class="ad-banner"><i class="fas fa-ad"></i> Continue assistindo mais filmes!</div></div>';
-            
             container.innerHTML = html;
             offset = items.length; hasMore = items.length === 50;
             setStatus(`${items.length} filmes`);
@@ -458,17 +329,12 @@
                 html += `<div class="section-title"><i class="fas ${icone}"></i> ${nomes[cat] || cat}</div><div class="grid tv-mode">`;
                 canais.forEach(item => { html += createCard(item, 'tv-iptv', cat); });
                 html += '</div>';
-                
-                // Ad entre categorias (exceto na primeira)
                 if (!first) {
                     html += '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
                 }
                 first = false;
             }
-            
-            // Ad final
             html += '<div class="ad-container"><div class="ad-banner"><i class="fas fa-wifi"></i> IPTV de qualidade - Assine já!</div></div>';
-            
             container.innerHTML = html;
             setStatus(`${items.length} canais`);
         }
@@ -540,7 +406,5 @@
 
         function resetAndLoad() { offset = 0; hasMore = true; document.getElementById('busca').value = ''; loadContent(); }
     </script>
-    <!-- Adicionar HLS.js para suporte a HLS no Chrome -->
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </body>
 </html>
