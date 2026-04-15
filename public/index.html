@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta name="referrer" content="no-referrer">
-    <title>DSO TV</title>
+    <title>DSO TV- FILMES E CANAIS TV GRÁTIS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
     <style>
@@ -102,12 +102,14 @@
 </head>
 <body>
     <div class="header">
-        <div class="logo" onclick="location.reload()"><i class="fas fa-play-circle"></i> DSO TV-FILMES E CANAIS GRÁTIS</div>
+        <div class="logo" onclick="location.reload()"><i class="fas fa-play-circle"></i> DSO TV- FILMES E CANAIS TV GRÁTIS</div>
         <div class="nav">
             <button class="active" data-mode="filmes"><i class="fas fa-film"></i> Filmes</button>
             <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV DSO</button>
             <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV ARSADM</button>
-            <script>
+
+        </div>
+                    <script>
   atOptions = {
     'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
     'format' : 'iframe',
@@ -117,19 +119,12 @@
   };
 </script>
 <script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
-
-        </div>
         <div class="search">
             <i class="fas fa-search"></i>
             <input type="text" id="busca" placeholder="Buscar...">
         </div>
     </div>
     
-    <div class="ad-container">
-     <script async="async" data-cfasync="false" src="https://eminentpercentvandalism.com/dcbf578353c4eb812d859f48d77599f4/invoke.js"></script>
-    <div id="container-dcbf578353c4eb812d859f48d77599f4">
-    </div>
-    </div>
     
     <div class="categorias" id="categorias">
         <button class="categoria active" data-cat="0"><i class="fas fa-star"></i> Todos</button>
@@ -159,15 +154,9 @@
             
             <div class="detalhes-sinopse">
                 <h3><i class="fas fa-align-left"></i> Sinopse</h3>
-                <p id="detalhesSinopse"></p>
+                <p id="detalhesSinopse"></p>            
             </div>
-            <div class="detalhes-elenco">
-                <h3><i class="fas fa-users"></i> Elenco</h3>
-                <div class="elenco-grid" id="detalhesElenco"></div>
-            </div>
-            <div class="detalhes-categorias" id="detalhesCategorias"></div>
-            
-<script>
+            <script>
   atOptions = {
     'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
     'format' : 'iframe',
@@ -177,6 +166,17 @@
   };
 </script>
 <script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
+            <div class="detalhes-elenco">
+                <h3><i class="fas fa-users"></i> Elenco</h3>
+                <div class="elenco-grid" id="detalhesElenco"></div>
+            </div>
+            <div class="detalhes-categorias" id="detalhesCategorias"></div>
+           
+  <div class="ad-container">
+     <script async="async" data-cfasync="false" src="https://eminentpercentvandalism.com/dcbf578353c4eb812d859f48d77599f4/invoke.js"></script>
+    <div id="container-dcbf578353c4eb812d859f48d77599f4">
+    </div>
+    </div>
         </div>
     </div>
     
@@ -201,8 +201,7 @@
     
     <div class="status-bar">
         <span id="statusMsg">Pronto</span>
-        <span><i class="fas fa-wifi"></i> DSO TV</span>
-        <script>
+                <script>
   atOptions = {
     'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
     'format' : 'iframe',
@@ -212,7 +211,7 @@
   };
 </script>
 <script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
-
+        <span><i class="fas fa-wifi"></i> DSO TV</span>
     </div>
 
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
@@ -462,10 +461,20 @@
             const data = await res.json();
             const items = data.canais || [];
             
-            let html = '<div class="section-title"><i class="fas fa-tv"></i> Canais MOVTV</div><div class="grid tv-mode">';
+            let html = '<div class="section-title"><i class="fas fa-tv"></i> Canais DSO TV</div><div class="grid tv-mode">';
             items.forEach(item => { html += createCard(item, 'tv-movtv'); });
             html += '</div>';
-            html += '<div class="ad-container"><div class="ad-banner"><i class="fas fa-satellite"></i> Mais canais disponíveis!</div></div>';
+            html += '<div class="ad-container">            <script>
+  atOptions = {
+    'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+    'format' : 'iframe',
+    'height' : 50,
+    'width' : 320,
+    'params' : {}
+  };
+</script>
+<script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
+</div>';
             container.innerHTML = html;
             setStatus(`${items.length} canais`);
         }
@@ -485,11 +494,24 @@
                 canais.forEach(item => { html += createCard(item, 'tv-iptv', cat); });
                 html += '</div>';
                 if (!first) {
-                    html += '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
+                    html += '<div class="ad-container">            <script>
+  atOptions = {
+    'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+    'format' : 'iframe',
+    'height' : 50,
+    'width' : 320,
+    'params' : {}
+  };
+</script>
+<script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
+</div>';
                 }
                 first = false;
             }
-            html += '<div class="ad-container"><div class="ad-banner"><i class="fas fa-wifi"></i> IPTV de qualidade - Assine já!</div></div>';
+            html += '<div class="ad-container"><script async="async" data-cfasync="false" src="https://eminentpercentvandalism.com/dcbf578353c4eb812d859f48d77599f4/invoke.js"></script>
+    <div id="container-dcbf578353c4eb812d859f48d77599f4">
+    </div>
+    </div>';
             container.innerHTML = html;
             setStatus(`${items.length} canais`);
         }
