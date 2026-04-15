@@ -77,8 +77,7 @@
         .player-close { background: none; border: none; color: #FFFFFF; font-size: 22px; cursor: pointer; }
         .player-container { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; }
         .player-container .video-js { width: 100%; height: 100%; }
-        .ad-container { display: flex; justify-content: center; padding: 6px; margin: 10px 0; }
-        .ad-placeholder { background: linear-gradient(135deg, #1A2D42, #2A3D52); border: 1px dashed #64B5F6; border-radius: 8px; padding: 10px; text-align: center; color: #B0BEC5; font-size: 11px; width: 100%; }
+        .ad-container { display: flex; justify-content: center; padding: 10px; margin: 10px 0; background: #0F1C2E; }
         .ad-banner { background: linear-gradient(135deg, #2A3D52, #1A2D42); border: 1px solid #64B5F6; border-radius: 12px; padding: 15px; margin: 10px 0; text-align: center; color: #FFF; }
         .ad-banner i { color: #E50914; margin-right: 8px; }
         .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 6px 16px; font-size: 11px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
@@ -114,14 +113,41 @@
         </div>
     </div>
     
-    <!-- Container para anúncio topo -->
-    <div id="adTopContainer" class="ad-container"></div>
+    <!-- ANÚNCIO TOPO -->
+    <div class="ad-container" id="adTopo">
+        <script>
+            atOptions = {
+                'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+            };
+        </script>
+        <script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
+    </div>
     
     <div class="categorias" id="categorias">
         <button class="categoria active" data-cat="0"><i class="fas fa-star"></i> Todos</button>
     </div>
     
+    <!-- CONTAINER PARA CONTEÚDO DINÂMICO -->
     <div id="contentContainer"></div>
+    
+    <!-- ANÚNCIO ENTRE CONTEÚDOS -->
+    <div class="ad-container" id="adMeio">
+        <script>
+            atOptions = {
+                'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+            };
+        </script>
+        <script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
+    </div>
+    
     <div class="loading" id="loading"><i class="fas fa-spinner"></i><br>Carregando...</div>
     
     <div class="detalhes-page" id="detalhesPage">
@@ -142,13 +168,32 @@
                 <h3><i class="fas fa-align-left"></i> Sinopse</h3>
                 <p id="detalhesSinopse"></p>            
             </div>
+            
+            <!-- ANÚNCIO DETALHES 1 -->
+            <div class="ad-container">
+                <script>
+                    atOptions = {
+                        'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+                        'format' : 'iframe',
+                        'height' : 50,
+                        'width' : 320,
+                        'params' : {}
+                    };
+                </script>
+                <script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
+            </div>
+            
             <div class="detalhes-elenco">
                 <h3><i class="fas fa-users"></i> Elenco</h3>
                 <div class="elenco-grid" id="detalhesElenco"></div>
             </div>
             <div class="detalhes-categorias" id="detalhesCategorias"></div>
-            <!-- Container para anúncio nos detalhes -->
-            <div id="adDetalhesContainer" class="ad-container"></div>
+            
+            <!-- ANÚNCIO DETALHES 2 -->
+            <div class="ad-container">
+                <script async="async" data-cfasync="false" src="https://eminentpercentvandalism.com/dcbf578353c4eb812d859f48d77599f4/invoke.js"></script>
+                <div id="container-dcbf578353c4eb812d859f48d77599f4"></div>
+            </div>
         </div>
     </div>
     
@@ -173,46 +218,25 @@
     
     <div class="status-bar">
         <span id="statusMsg">Pronto</span>
+        
+        <!-- ANÚNCIO STATUS BAR -->
+        <script>
+            atOptions = {
+                'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+            };
+        </script>
+        <script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
+        
         <span><i class="fas fa-wifi"></i> DSO TV</span>
     </div>
 
-    <!-- Scripts carregados no final do body -->
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
     
-    <!-- Script de configuração de anúncios carregado dinamicamente -->
-    <script>
-        // Configuração global de anúncios
-        window.adConfig = {
-            key: 'f3f5f151f258fa81f6c3b7b9ef4ba434',
-            format: 'iframe',
-            height: 50,
-            width: 320,
-            params: {}
-        };
-        
-        // Função para carregar anúncio em container específico
-        function loadAd(containerId, adKey = null) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            
-            const useKey = adKey || window.adConfig.key;
-            container.innerHTML = `
-                <iframe src="https://eminentpercentvandalism.com/${useKey}/invoke.js" 
-                        style="width: ${window.adConfig.width}px; height: ${window.adConfig.height}px; border: none;"
-                        scrolling="no"
-                        frameborder="0"></iframe>
-            `;
-        }
-        
-        // Carregar anúncios após página carregar
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                loadAd('adTopContainer');
-                loadAd('adDetalhesContainer');
-            }, 1000);
-        });
-    </script>
-    
+    <!-- SCRIPT PRINCIPAL -->
     <script>
         const API_BASE = '/api';
         let currentMode = 'filmes';
@@ -239,6 +263,13 @@
                     document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     document.getElementById('categorias').style.display = currentMode === 'filmes' ? 'flex' : 'none';
+                    // Mostrar/esconder anúncios conforme o modo
+                    const adMeio = document.getElementById('adMeio');
+                    if (currentMode === 'filmes') {
+                        adMeio.style.display = 'flex';
+                    } else {
+                        adMeio.style.display = 'none';
+                    }
                     resetAndLoad();
                 });
             });
@@ -274,7 +305,6 @@
                 }
             });
 
-            let backPressTimer = 0;
             window.addEventListener('beforeunload', (e) => {
                 if (exitIntentEnabled) {
                     e.preventDefault();
@@ -473,13 +503,11 @@
             let html = '';
             const nomes = { 'esportes': 'Esportes', 'noticias': 'Noticias', 'documentario': 'Documentarios', 'infantil': 'Infantil', 'filmes-series': 'Filmes e Series', 'variedades': 'Variedades' };
             
-            let first = true;
             for (const [cat, canais] of Object.entries(categorias)) {
                 const icone = categoriaIcones[cat] || 'fa-tv';
                 html += `<div class="section-title"><i class="fas ${icone}"></i> ${nomes[cat] || cat}</div><div class="grid tv-mode">`;
                 canais.forEach(item => { html += createCard(item, 'tv-iptv', cat); });
                 html += '</div>';
-                first = false;
             }
             container.innerHTML = html;
             setStatus(`${items.length} canais`);
