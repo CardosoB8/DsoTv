@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const API_BASE_URL = "http://api.movtv.co.mz";
-const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
+const DEVICE_ID = "f30ec03a4e6a32c1b45esd7eb9c10854";
 const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
 
@@ -176,8 +176,19 @@ app.get('/api/canais-movtv', async (req, res) => {
     try {
         const cached = getCached('canais-movtv');
         if (cached) return res.json(cached);
-        const data = await callApi('partner/content/getAllTV', { limit: 200 });
-        const canais = (data.data || []).map(canal => ({ id: canal.id, titulo: canal.title || 'Sem nome', thumb: canal.thumb || '' }));
+        const data = await callApi('partner/content/getAllTV', { limit: 500 });
+        const canais = (data.data || []).map(canal => {
+            let thumb = canal.thumb || '';
+            if (thumb) {
+                thumb = thumb.replace(/\\\//g, '/');
+                if (!thumb.startsWith('http://') && !thumb.startsWith('https://')) {
+                    if (thumb.startsWith('//')) thumb = 'https:' + thumb;
+                    else if (thumb.startsWith('/')) thumb = 'https:/' + thumb;
+                    else thumb = 'https://' + thumb;
+                }
+            }
+            return { id: canal.id, titulo: canal.title || 'Sem nome', thumb: thumb };
+        });
         const result = { canais };
         setCached('canais-movtv', result);
         res.json(result);
@@ -193,7 +204,7 @@ app.get('/api/filme/:id', async (req, res) => {
         const raw = data.data || {};
         let videoUrl = raw.media_url || '';
         if (videoUrl) { 
-            videoUrl = videoUrl.replace('30fc87ca.vws.vegacdn.vn', 'free-media.movtv.co.mz'); 
+            videoUrl = videoUrl.replace('30fc87ca.vws.vegacdn.vn', '30fc87ca.vws.vegacdn.vn'); 
             if (!videoUrl.startsWith('http')) videoUrl = 'http://' + videoUrl; 
         }
         const atores = (raw.actors || []).map(a => a.title || a.name).filter(Boolean);
