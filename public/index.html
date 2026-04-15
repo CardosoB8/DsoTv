@@ -79,6 +79,8 @@
         .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 6px 16px; font-size: 11px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
         .ad-container { display: flex; justify-content: center; padding: 6px; }
         .ad-placeholder { background: linear-gradient(135deg, #1A2D42, #2A3D52); border: 1px dashed #64B5F6; border-radius: 8px; padding: 10px; text-align: center; color: #B0BEC5; font-size: 11px; width: 100%; }
+        .ad-banner { background: linear-gradient(135deg, #2A3D52, #1A2D42); border: 1px solid #64B5F6; border-radius: 12px; padding: 15px; margin: 10px 0; text-align: center; color: #FFF; }
+        .ad-banner i { color: #E50914; margin-right: 8px; }
         @media (min-width: 768px) { 
             .grid { grid-template-columns: repeat(5, 1fr); } 
             .grid.tv-mode { grid-template-columns: repeat(3, 1fr); } 
@@ -101,6 +103,11 @@
         </div>
     </div>
     
+    <!-- Ad no topo -->
+    <div class="ad-container">
+        <div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade - Anuncie aqui</div>
+    </div>
+    
     <div class="categorias" id="categorias">
         <button class="categoria active" data-cat="0"><i class="fas fa-star"></i> Todos</button>
     </div>
@@ -115,13 +122,24 @@
             <div class="detalhes-capa-overlay"></div>
         </div>
         <div class="detalhes-content">
+            <!-- Ad dentro dos detalhes -->
+            <div class="ad-banner">
+                <i class="fas fa-ad"></i> Publicidade - Assista com qualidade
+            </div>
+            
             <h1 class="detalhes-titulo" id="detalhesTitulo"></h1>
             <div class="detalhes-titulo-original" id="detalhesTituloOriginal"></div>
             <div class="detalhes-meta" id="detalhesMeta"></div>
             <div class="detalhes-botoes">
-                <button class="btn-primary" id="btnAssistir"><i class="fas fa-play"></i> Assistir (WebView)</button>
-                <button class="btn-secondary" id="btnAbrirNovaAba"><i class="fas fa-external-link-alt"></i> Nova Aba</button>
+                <button class="btn-primary" id="btnAbrirNovaAba"><i class="fas fa-external-link-alt"></i> Abrir em Nova Aba</button>
+                <button class="btn-secondary" id="btnAssistirNativo"><i class="fas fa-play"></i> Player Nativo</button>
             </div>
+            
+            <!-- Ad entre botões e sinopse -->
+            <div class="ad-banner" style="background: linear-gradient(135deg, #3A4D62, #2A3D52);">
+                <i class="fas fa-film"></i> Promoção: Filmes em destaque
+            </div>
+            
             <div class="detalhes-sinopse">
                 <h3><i class="fas fa-align-left"></i> Sinopse</h3>
                 <p id="detalhesSinopse"></p>
@@ -131,6 +149,11 @@
                 <div class="elenco-grid" id="detalhesElenco"></div>
             </div>
             <div class="detalhes-categorias" id="detalhesCategorias"></div>
+            
+            <!-- Ad no final dos detalhes -->
+            <div class="ad-banner">
+                <i class="fas fa-tv"></i> Canais AO VIVO disponíveis!
+            </div>
         </div>
     </div>
     
@@ -201,15 +224,18 @@
                 document.getElementById('detalhesPage').classList.remove('active');
             });
 
-            document.getElementById('btnAssistir').addEventListener('click', () => {
-                if (filmeAtual && filmeAtual.videoUrl) {
-                    openWebView(filmeAtual.videoUrl, filmeAtual.titulo);
-                }
-            });
-
+            // 🔥 BOTÃO PRINCIPAL: Abrir em Nova Aba
             document.getElementById('btnAbrirNovaAba').addEventListener('click', () => {
                 if (filmeAtual && filmeAtual.videoUrl) {
                     window.open(filmeAtual.videoUrl, '_blank');
+                    setStatus(`Abrindo em nova aba: ${filmeAtual.titulo}`);
+                }
+            });
+
+            // 🔥 BOTÃO SECUNDÁRIO: Player Nativo do Chrome
+            document.getElementById('btnAssistirNativo').addEventListener('click', () => {
+                if (filmeAtual && filmeAtual.videoUrl) {
+                    playNativo(filmeAtual.videoUrl, filmeAtual.titulo);
                 }
             });
 
@@ -232,7 +258,7 @@
                 } else if (type === 'tv-movtv') {
                     fetchTVMOVTVUrl(id, title);
                 } else if (type === 'tv-iptv') {
-                    if (url) playIPTV(url, title);
+                    if (url) playNativo(url, title);
                 }
             });
 
@@ -259,19 +285,73 @@
             document.getElementById('playerContainer').innerHTML = '';
         }
 
-        // 🔥 WEBVIEW PLAYER
-        function openWebView(url, title) {
+        // 🔥 PLAYER NATIVO DO CHROME (usando a tag <video> nativa)
+        function playNativo(url, title) {
             closePlayer();
             document.getElementById('playerTitle').textContent = title || 'Reproduzindo';
             document.getElementById('playerModal').classList.add('active');
             
             const container = document.getElementById('playerContainer');
-            const webViewUrl = `/player?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title || '')}`;
-            container.innerHTML = `<iframe src="${webViewUrl}" allowfullscreen allow="autoplay; encrypted-media; fullscreen" style="width:100%;height:100%;border:none;"></iframe>`;
-            setStatus('Reproduzindo: ' + title);
+            
+            // Usa a tag <video> nativa do HTML5 (Chrome player nativo)
+            const videoElement = document.createElement('video');
+            videoElement.controls = true;
+            videoElement.autoplay = true;
+            videoElement.style.width = '100%';
+            videoElement.style.height = '100%';
+            videoElement.style.objectFit = 'contain';
+            videoElement.setAttribute('playsinline', '');
+            videoElement.setAttribute('webkit-playsinline', '');
+            
+            // Criar source element
+            const source = document.createElement('source');
+            source.src = url;
+            
+            // Detectar tipo de vídeo
+            if (url.includes('.m3u8') || url.includes('.m3u')) {
+                source.type = 'application/vnd.apple.mpegurl';
+                // Para HLS nativo no Chrome (funciona em iOS/Safari, Chrome precisa de hls.js)
+                if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                    // Safari/iOS suporta nativamente
+                    source.type = 'application/vnd.apple.mpegurl';
+                } else {
+                    // Chrome/Android usa HLS.js
+                    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                        const hls = new Hls();
+                        hls.loadSource(url);
+                        hls.attachMedia(videoElement);
+                        videoElement.play().catch(e => console.log('Autoplay prevented'));
+                    } else {
+                        // Fallback para Video.js
+                        usarVideoJS(url, title);
+                        return;
+                    }
+                }
+            } else {
+                source.type = 'video/mp4';
+            }
+            
+            videoElement.appendChild(source);
+            container.appendChild(videoElement);
+            
+            // Tentar reproduzir
+            videoElement.play().catch(e => {
+                console.log('Autoplay prevented, user interaction needed');
+            });
+            
+            videoElement.addEventListener('error', (e) => {
+                console.error('Erro no player nativo:', e);
+                setStatus('Erro no player nativo - tentando player alternativo...');
+                // Fallback para Video.js
+                container.innerHTML = '';
+                usarVideoJS(url, title);
+            });
+            
+            setStatus('Reproduzindo (Player Nativo): ' + title);
         }
-
-        function playIPTV(url, title) {
+        
+        // Fallback usando Video.js
+        function usarVideoJS(url, title) {
             closePlayer();
             document.getElementById('playerTitle').textContent = title || 'Reproduzindo';
             document.getElementById('playerModal').classList.add('active');
@@ -281,10 +361,29 @@
             videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered';
             container.appendChild(videoElement);
             
-            videoPlayer = videojs(videoElement, { controls: true, autoplay: true, preload: 'auto', fluid: true, html5: { hls: { overrideNative: true } } });
-            videoPlayer.ready(() => { videoPlayer.src({ src: url, type: url.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' }); videoPlayer.play().catch(e => {}); });
+            videoPlayer = videojs(videoElement, { 
+                controls: true, 
+                autoplay: true, 
+                preload: 'auto', 
+                fluid: true,
+                html5: { 
+                    hls: { overrideNative: true },
+                    nativeVideoTracks: false,
+                    nativeAudioTracks: false,
+                    nativeTextTracks: false
+                }
+            });
+            
+            videoPlayer.ready(() => { 
+                videoPlayer.src({ 
+                    src: url, 
+                    type: url.includes('.m3u8') ? 'application/x-mpegURL' : 'video/mp4' 
+                }); 
+                videoPlayer.play().catch(e => {}); 
+            });
+            
             videoPlayer.on('error', () => setStatus('Erro - tente novamente'));
-            setStatus('Reproduzindo: ' + title);
+            setStatus('Reproduzindo (Video.js): ' + title);
         }
 
         async function loadCategories() {
@@ -322,10 +421,14 @@
             const container = document.getElementById('contentContainer');
             const url = `${API_BASE}/filmes?limit=50&offset=0&category=${currentCategory}`;
             const res = await fetch(url); const data = await res.json(); const items = data.filmes || [];
-            let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
-            html += '<div class="section-title"><i class="fas fa-film"></i> Filmes</div><div class="grid">';
+            let html = '<div class="section-title"><i class="fas fa-film"></i> Filmes</div><div class="grid">';
             items.forEach(item => { html += createCard(item, 'filme'); });
-            html += '</div>'; container.innerHTML = html;
+            html += '</div>';
+            
+            // Ad entre seções
+            html += '<div class="ad-container" style="margin-top: 10px;"><div class="ad-banner"><i class="fas fa-ad"></i> Continue assistindo mais filmes!</div></div>';
+            
+            container.innerHTML = html;
             offset = items.length; hasMore = items.length === 50;
             setStatus(`${items.length} filmes`);
         }
@@ -333,10 +436,11 @@
         async function loadTVMOVTV() {
             const container = document.getElementById('contentContainer');
             const url = `${API_BASE}/canais-movtv`; const res = await fetch(url); const data = await res.json(); const items = data.canais || [];
-            let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
-            html += '<div class="section-title"><i class="fas fa-tv"></i> Canais MOVTV</div><div class="grid tv-mode">';
+            let html = '<div class="section-title"><i class="fas fa-tv"></i> Canais MOVTV</div><div class="grid tv-mode">';
             items.forEach(item => { html += createCard(item, 'tv-movtv'); });
-            html += '</div>'; container.innerHTML = html;
+            html += '</div>';
+            html += '<div class="ad-container"><div class="ad-banner"><i class="fas fa-satellite"></i> Mais canais disponíveis!</div></div>';
+            container.innerHTML = html;
             setStatus(`${items.length} canais`);
         }
 
@@ -345,14 +449,26 @@
             const url = `${API_BASE}/canais-iptv`; const res = await fetch(url); const data = await res.json(); const items = data.canais || [];
             const categorias = {};
             items.forEach(item => { const cat = item.categoria || 'variedades'; if (!categorias[cat]) categorias[cat] = []; categorias[cat].push(item); });
-            let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
+            let html = '';
             const nomes = { 'esportes': 'Esportes', 'noticias': 'Noticias', 'documentario': 'Documentarios', 'infantil': 'Infantil', 'filmes-series': 'Filmes e Series', 'variedades': 'Variedades' };
+            
+            let first = true;
             for (const [cat, canais] of Object.entries(categorias)) {
                 const icone = categoriaIcones[cat] || 'fa-tv';
                 html += `<div class="section-title"><i class="fas ${icone}"></i> ${nomes[cat] || cat}</div><div class="grid tv-mode">`;
                 canais.forEach(item => { html += createCard(item, 'tv-iptv', cat); });
                 html += '</div>';
+                
+                // Ad entre categorias (exceto na primeira)
+                if (!first) {
+                    html += '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
+                }
+                first = false;
             }
+            
+            // Ad final
+            html += '<div class="ad-container"><div class="ad-banner"><i class="fas fa-wifi"></i> IPTV de qualidade - Assine já!</div></div>';
+            
             container.innerHTML = html;
             setStatus(`${items.length} canais`);
         }
@@ -387,10 +503,11 @@
             try {
                 const res = await fetch(`${API_BASE}/buscar?q=${encodeURIComponent(term)}`);
                 const data = await res.json(); const items = data.filmes || [];
-                let html = '<div class="ad-container"><div class="ad-placeholder"><i class="fas fa-ad"></i> Publicidade</div></div>';
-                html += '<div class="section-title"><i class="fas fa-search"></i> Resultados</div><div class="grid">';
+                let html = '<div class="section-title"><i class="fas fa-search"></i> Resultados</div><div class="grid">';
                 items.forEach(item => { html += createCard(item, 'filme'); });
-                html += '</div>'; container.innerHTML = html;
+                html += '</div>';
+                html += '<div class="ad-container"><div class="ad-banner"><i class="fas fa-search"></i> Não encontrou? Tente outros termos!</div></div>';
+                container.innerHTML = html;
                 setStatus(`${items.length} resultados`);
             } catch (e) { setStatus('Erro na busca'); }
         }
@@ -423,5 +540,7 @@
 
         function resetAndLoad() { offset = 0; hasMore = true; document.getElementById('busca').value = ''; loadContent(); }
     </script>
+    <!-- Adicionar HLS.js para suporte a HLS no Chrome -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </body>
 </html>
