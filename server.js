@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 const API_BASE_URL = "http://api.movtv.co.mz";
-const DEVICE_ID = "f30ec03a4e6a32c1b45esd7eb9c10854";
+const DEVICE_ID = "f30ec03a4e6a32c1b45efd7eb9c10854";
 const MSISDN = "865446574";
 const SECRET = "mCotB+*f>SYyO@8Em";
 
@@ -22,6 +22,7 @@ const API_HEADERS = {
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/imagens', express.static(path.join(__dirname, 'imagens')));
 
 function generateTimestamp() {
     const now = new Date();
@@ -178,16 +179,7 @@ app.get('/api/canais-movtv', async (req, res) => {
         if (cached) return res.json(cached);
         const data = await callApi('partner/content/getAllTV', { limit: 500 });
         const canais = (data.data || []).map(canal => {
-            let thumb = canal.thumb || '';
-            if (thumb) {
-                thumb = thumb.replace(/\\\//g, '/');
-                if (!thumb.startsWith('http://') && !thumb.startsWith('https://')) {
-                    if (thumb.startsWith('//')) thumb = 'https:' + thumb;
-                    else if (thumb.startsWith('/')) thumb = 'https:/' + thumb;
-                    else thumb = 'https://' + thumb;
-                }
-            }
-            return { id: canal.id, titulo: canal.title || 'Sem nome', thumb: thumb };
+            return { id: canal.id, titulo: canal.title || 'Sem nome' };
         });
         const result = { canais };
         setCached('canais-movtv', result);
