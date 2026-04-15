@@ -82,6 +82,16 @@
         .ad-banner { background: linear-gradient(135deg, #2A3D52, #1A2D42); border: 1px solid #64B5F6; border-radius: 12px; padding: 15px; margin: 10px 0; text-align: center; color: #FFF; }
         .ad-banner i { color: #E50914; margin-right: 8px; }
         .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1A2D42; padding: 6px 16px; font-size: 11px; color: #B0BEC5; display: flex; justify-content: space-between; z-index: 99; }
+        .exit-popup { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
+        .exit-popup.active { display: flex; }
+        .exit-popup-content { background: #1A2D42; border-radius: 16px; padding: 24px; max-width: 350px; width: 90%; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid #E50914; }
+        .exit-popup-content h3 { color: #E50914; margin-bottom: 16px; font-size: 20px; }
+        .exit-popup-content p { color: #B0BEC5; margin-bottom: 24px; font-size: 14px; }
+        .exit-popup-buttons { display: flex; gap: 12px; justify-content: center; }
+        .exit-btn { padding: 10px 24px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; border: none; transition: all 0.2s; }
+        .exit-btn-yes { background: #E50914; color: #FFF; }
+        .exit-btn-no { background: rgba(255,255,255,0.1); color: #FFF; }
+        .exit-btn:hover { transform: scale(1.05); }
         @media (min-width: 768px) { 
             .grid { grid-template-columns: repeat(5, 1fr); } 
             .grid.tv-mode { grid-template-columns: repeat(3, 1fr); } 
@@ -95,8 +105,8 @@
         <div class="logo" onclick="location.reload()"><i class="fas fa-play-circle"></i> DSO TV</div>
         <div class="nav">
             <button class="active" data-mode="filmes"><i class="fas fa-film"></i> Filmes</button>
-            <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV DSO</button>
-            <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV ARSADM</button>
+            <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV MOVTV</button>
+            <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV IPTV</button>
         </div>
         <div class="search">
             <i class="fas fa-search"></i>
@@ -162,6 +172,17 @@
         <div class="player-container" id="playerContainer"></div>
     </div>
     
+    <div class="exit-popup" id="exitPopup">
+        <div class="exit-popup-content">
+            <h3><i class="fas fa-sign-out-alt"></i> Sair do DSO TV?</h3>
+            <p>Tem certeza que deseja sair? Volte sempre!</p>
+            <div class="exit-popup-buttons">
+                <button class="exit-btn exit-btn-yes" id="exitYes">Sim, Sair</button>
+                <button class="exit-btn exit-btn-no" id="exitNo">Não, Ficar</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="status-bar">
         <span id="statusMsg">Pronto</span>
         <span><i class="fas fa-wifi"></i> DSO TV</span>
@@ -178,6 +199,7 @@
         let searchTimeout = null;
         let filmeAtual = null;
         let videoPlayer = null;
+        let exitIntentEnabled = true;
 
         function setStatus(text) { document.getElementById('statusMsg').textContent = text; }
 
@@ -219,6 +241,38 @@
             window.addEventListener('scroll', () => {
                 if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 400) {
                     if (!isLoading && hasMore && currentMode === 'filmes' && !searchInput.value) loadMore();
+                }
+            });
+
+            document.addEventListener('mouseleave', (e) => {
+                if (e.clientY <= 0 && exitIntentEnabled) {
+                    showExitPopup();
+                }
+            });
+
+            let backPressTimer = 0;
+            window.addEventListener('beforeunload', (e) => {
+                if (exitIntentEnabled) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                    showExitPopup();
+                    return '';
+                }
+            });
+
+            document.getElementById('exitYes').addEventListener('click', () => {
+                exitIntentEnabled = false;
+                window.close();
+                window.location.href = 'about:blank';
+            });
+
+            document.getElementById('exitNo').addEventListener('click', () => {
+                document.getElementById('exitPopup').classList.remove('active');
+            });
+
+            document.getElementById('exitPopup').addEventListener('click', (e) => {
+                if (e.target.classList.contains('exit-popup')) {
+                    document.getElementById('exitPopup').classList.remove('active');
                 }
             });
 
@@ -267,6 +321,10 @@
             loadCategories();
             loadContent();
         });
+
+        function showExitPopup() {
+            document.getElementById('exitPopup').classList.add('active');
+        }
 
         function closePlayer() {
             if (videoPlayer) { 
@@ -409,6 +467,76 @@
             setStatus(`${items.length} canais`);
         }
 
+        function getLocalImagePath(title) {
+            if (!title) return '';
+            
+            const imageMap = {
+                'ST_KUNGFU': 'ST_KUNGFU.jpg',
+                'ST_Sport_Premium': 'ST_Sport_Premium.jpg',
+                'TVM1': 'TVM1.jpg',
+                'TDC_series': 'TDC_series.jpg',
+                'ST_MOVIES_PLUS': 'ST_MOVIES_PLUS.jpg',
+                'MINDCAST_TV': 'MINDCAST_TV.jpg',
+                'CGTN': 'CGTN.jpg',
+                'ST_NOVELA_P': 'ST_NOVELA_P.jpg',
+                'TVI_INTL1': 'TVI_INTL1.jpg',
+                'Zee_One': 'Zee_One.jpg',
+                'TOONAMI': 'TOONAMI.jpg',
+                'REINO_INFANTIL_TV': 'REINO_INFANTIL_TV.jpg',
+                'HAQ_TV': 'HAQ_TV.jpg',
+                'COLORS': 'COLORS.jpg',
+                'NIGEZIE': 'NIGEZIE.jpg',
+                'TV_Sucesso': 'TV_Sucesso.jpg',
+                'ECO_TV_MOZ': 'ECO_TV_MOZ.jpg',
+                'ST_Sports_Arena': 'ST_Sports_Arena.jpg',
+                'ESPN_2': 'ESPN_2.jpg',
+                'BBC_WORLD_NEWS': 'BBC_WORLD_NEWS.jpg',
+                'TELESCOLA': 'TELESCOLA.jpg',
+                'STAR_GOLD': 'STAR_GOLD.jpg',
+                'Gospel_TV': 'Gospel_TV.jpg',
+                'Zee_TV': 'Zee_TV.jpg',
+                'CBEEBIES': 'CBEEBIES.jpg',
+                'KINGDOM_TV': 'KINGDOM_TV.jpg',
+                'ZEE_CINEMA': 'ZEE_CINEMA.jpg',
+                'ST_Sino_Drama': 'ST_Sino_Drama.jpg',
+                'ST_NAIJA': 'ST_NAIJA.jpg',
+                'AMC': 'AMC.jpg',
+                'SIC_MULHER': 'SIC_MULHER.jpg',
+                'ESPN': 'ESPN.jpg',
+                '__STAR_PLUS': '__STAR_PLUS.jpg',
+                'AMC_Movies': 'AMC_Movies.jpg',
+                'ST_World_Football': 'ST_World_Football.jpg',
+                'Classica_TV': 'Classica_TV.jpg',
+                'ST_Kids': 'ST_Kids.jpg',
+                'TVM2_International': 'TVM2_International.jpg',
+                'Gungu_TV': 'Gungu_TV.jpg',
+                'Afro_Music': 'Afro_Music.jpg',
+                'ST_Sport_Life': 'ST_Sport_Life.jpg',
+                'STAR_LIFE': 'STAR_LIFE.jpg',
+                'JimJam': 'JimJam.jpg',
+                'ST_Sport_Focus': 'ST_Sport_Focus.jpg',
+                'ST_Swahili': 'ST_Swahili.jpg',
+                'FASHION_TV_AFRICA': 'FASHION_TV_AFRICA.jpg',
+                'Zee_Bolly_Movies': 'Zee_Bolly_Movies.jpg',
+                'ST_Zone': 'ST_Zone.jpg',
+                'BIGGS': 'BIGGS.jpg',
+                'MCM_TOP': 'MCM_TOP.jpg',
+                'BabyTV': 'BabyTV.jpg'
+            };
+            
+            const normalizedTitle = title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+            
+            for (const [key, value] of Object.entries(imageMap)) {
+                if (normalizedTitle.includes(key) || key.includes(normalizedTitle) || 
+                    title.toLowerCase().includes(key.toLowerCase().replace(/_/g, ' '))) {
+                    return `/imagens/${value}`;
+                }
+            }
+            
+            const simpleName = title.replace(/[^a-zA-Z0-9]/g, '_') + '.jpg';
+            return `/imagens/${simpleName}`;
+        }
+
         function createCard(item, type, categoria) {
             const id = item.id || ''; 
             const title = item.titulo || item.nome || 'Sem titulo';
@@ -419,7 +547,9 @@
             if (type === 'tv-movtv') fallbackIcon = 'fa-tv'; 
             if (type === 'tv-iptv') fallbackIcon = categoriaIcones[categoria] || 'fa-tv';
             
-            if (thumbUrl) {
+            if (type === 'tv-movtv') {
+                thumbUrl = getLocalImagePath(title);
+            } else if (thumbUrl) {
                 thumbUrl = thumbUrl.replace(/\\\//g, '/');
                 if (!thumbUrl.startsWith('http://') && !thumbUrl.startsWith('https://')) {
                     if (thumbUrl.startsWith('//')) thumbUrl = 'https:' + thumbUrl;
