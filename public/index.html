@@ -857,11 +857,22 @@
             <span>DSO TV</span>
             <small>FILMES & TV</small>
         </div>
+        
         <div class="nav">
             <button class="active" data-mode="filmes"><i class="fas fa-film"></i> Filmes</button>
             <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV DSO</button>
             <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV ARSADM</button>
         </div>
+            <script>
+  atOptions = {
+    'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+    'format' : 'iframe',
+    'height' : 50,
+    'width' : 320,
+    'params' : {}
+  };
+</script>
+<script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
         <div class="header-right">
             <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
                 <i class="fas fa-moon"></i>
@@ -878,7 +889,7 @@
     </div>
     
     <div id="contentContainer"></div>
-    <div class="loading" id="loading"><i class="fas fa-spinner"></i><br>Carregando conteúdo incrível...</div>
+    <div class="loading" id="loading"><i class="fas fa-spinner"></i><br>Carregando conteúdo...</div>
     
     <div class="detalhes-page" id="detalhesPage">
         <div class="detalhes-header">
@@ -897,15 +908,25 @@
             <div class="detalhes-sinopse">
                 <h3><i class="fas fa-align-left"></i> Sinopse</h3>
                 <p id="detalhesSinopse"></p>
+                    <script>
+  atOptions = {
+    'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+    'format' : 'iframe',
+    'height' : 50,
+    'width' : 320,
+    'params' : {}
+  };
+</script>
+<script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
             </div>
             <div class="detalhes-elenco">
                 <h3><i class="fas fa-users"></i> Elenco</h3>
                 <div class="elenco-grid" id="detalhesElenco"></div>
             </div>
             <div class="detalhes-categorias" id="detalhesCategorias"></div>
-            <div class="ad-banner">
-                <i class="fas fa-film"></i> Continue assistindo os melhores conteúdos!
-            </div>
+                 <script async="async" data-cfasync="false" src="https://eminentpercentvandalism.com/dcbf578353c4eb812d859f48d77599f4/invoke.js"></script>
+    <div id="container-dcbf578353c4eb812d859f48d77599f4">
+    </div>
         </div>
     </div>
     
@@ -931,6 +952,16 @@
     <div class="status-bar">
         <span id="statusMsg"><i class="fas fa-check-circle" style="color: #4ade80;"></i> Online</span>
         <span><i class="fas fa-crown" style="color: #fbbf24;"></i> DSO TV • Sua melhor escolha</span>
+            <script>
+  atOptions = {
+    'key' : 'f3f5f151f258fa81f6c3b7b9ef4ba434',
+    'format' : 'iframe',
+    'height' : 50,
+    'width' : 320,
+    'params' : {}
+  };
+</script>
+<script src="https://eminentpercentvandalism.com/f3f5f151f258fa81f6c3b7b9ef4ba434/invoke.js"></script>
     </div>
 
     <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
@@ -1252,29 +1283,42 @@
             }
 
             function createCard(item, type, categoria) {
-                const id = item.id || ''; 
-                const title = item.titulo || item.nome || 'Sem título';
-                const thumbUrl = item.thumb || item.logo || ''; 
-                const url = item.url || ''; 
-                const ano = item.ano || '';
-                let fallbackIcon = 'fa-film'; 
-                if (type === 'tv-movtv') fallbackIcon = 'fa-tv'; 
-                if (type === 'tv-iptv') fallbackIcon = categoriaIcones[categoria] || 'fa-tv';
-                
-                return `<div class="card" data-id="${id}" data-title="${title}" data-url="${url}" data-type="${type}">
-                    <div class="thumb">
-                        ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
-                        <div class="fallback" style="display: ${thumbUrl ? 'none' : 'flex'}; width:100%; height:100%; align-items:center; justify-content:center;">
-                            <i class="fas ${fallbackIcon}"></i>
-                        </div>
-                        ${type !== 'filme' ? '<div class="live-badge"><i class="fas fa-circle"></i> AO VIVO</div>' : ''}
-                    </div>
-                    <div class="info">
-                        <div class="titulo">${title}</div>
-                        <div class="meta">${ano ? `<span><i class="far fa-calendar-alt"></i> ${ano}</span>` : ''}</div>
-                    </div>
-                </div>`;
-            }
+    const id = item.id || ''; 
+    const title = item.titulo || item.nome || 'Sem título';
+    let thumbUrl = item.thumb || item.logo || ''; 
+    const url = item.url || ''; 
+    const ano = item.ano || '';
+    let fallbackIcon = 'fa-film'; 
+    if (type === 'tv-movtv') fallbackIcon = 'fa-tv'; 
+    if (type === 'tv-iptv') fallbackIcon = categoriaIcones[categoria] || 'fa-tv';
+    
+    // LÓGICA ESPECIAL PARA CANAIS DSO TV
+    if (type === 'tv-movtv') {
+        thumbUrl = getLocalImagePath(title);
+    } else if (thumbUrl) {
+        // Corrige URLs para outros tipos
+        thumbUrl = thumbUrl.replace(/\\\//g, '/');
+        if (!thumbUrl.startsWith('http://') && !thumbUrl.startsWith('https://')) {
+            if (thumbUrl.startsWith('//')) thumbUrl = 'https:' + thumbUrl;
+            else if (thumbUrl.startsWith('/')) thumbUrl = 'https:/' + thumbUrl;
+            else thumbUrl = 'https://' + thumbUrl;
+        }
+    }
+    
+    return `<div class="card" data-id="${id}" data-title="${title}" data-url="${url}" data-type="${type}">
+        <div class="thumb">
+            ${thumbUrl ? `<img src="${thumbUrl}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+            <div class="fallback" style="display: ${thumbUrl ? 'none' : 'flex'}; width:100%; height:100%; align-items:center; justify-content:center;">
+                <i class="fas ${fallbackIcon}"></i>
+            </div>
+            ${type !== 'filme' ? '<div class="live-badge"><i class="fas fa-circle"></i> AO VIVO</div>' : ''}
+        </div>
+        <div class="info">
+            <div class="titulo">${title}</div>
+            <div class="meta">${ano ? `<span><i class="far fa-calendar-alt"></i> ${ano}</span>` : ''}</div>
+        </div>
+    </div>`;
+}
 
             async function loadMore() {
                 if (isLoading || !hasMore || currentMode !== 'filmes') return; 
@@ -1311,6 +1355,78 @@
                     setStatus('Erro na busca'); 
                 }
             }
+            // Adicione esta função logo após as declarações de variáveis (antes do init)
+function getLocalImagePath(title) {
+    if (!title) return '';
+    
+    const imageMap = {
+        'ST_KUNGFU': 'ST_KUNGFU.jpg',
+        'ST_Sport_Premium': 'ST_Sport_Premium.jpg',
+        'TVM1': 'TVM1.jpg',
+        'TDC_series': 'TDC_series.jpg',
+        'ST_MOVIES_PLUS': 'ST_MOVIES_PLUS.jpg',
+        'MINDCAST_TV': 'MINDCAST_TV.jpg',
+        'CGTN': 'CGTN.jpg',
+        'ST_NOVELA_P': 'ST_NOVELA_P.jpg',
+        'TVI_INTL1': 'TVI_INTL1.jpg',
+        'Zee_One': 'Zee_One.jpg',
+        'TOONAMI': 'TOONAMI.jpg',
+        'REINO_INFANTIL_TV': 'REINO_INFANTIL_TV.jpg',
+        'HAQ_TV': 'HAQ_TV.jpg',
+        'COLORS': 'COLORS.jpg',
+        'NIGEZIE': 'NIGEZIE.jpg',
+        'TV_Sucesso': 'TV_Sucesso.jpg',
+        'ECO_TV_MOZ': 'ECO_TV_MOZ.jpg',
+        'ST_Sports_Arena': 'ST_Sports_Arena.jpg',
+        'ESPN_2': 'ESPN_2.jpg',
+        'BBC_WORLD_NEWS': 'BBC_WORLD_NEWS.jpg',
+        'TELESCOLA': 'TELESCOLA.jpg',
+        'STAR_GOLD': 'STAR_GOLD.jpg',
+        'Gospel_TV': 'Gospel_TV.jpg',
+        'Zee_TV': 'Zee_TV.jpg',
+        'CBEEBIES': 'CBEEBIES.jpg',
+        'KINGDOM_TV': 'KINGDOM_TV.jpg',
+        'ZEE_CINEMA': 'ZEE_CINEMA.jpg',
+        'ST_Sino_Drama': 'ST_Sino_Drama.jpg',
+        'ST_NAIJA': 'ST_NAIJA.jpg',
+        'AMC': 'AMC.jpg',
+        'SIC_MULHER': 'SIC_MULHER.jpg',
+        'ESPN': 'ESPN.jpg',
+        '__STAR_PLUS': '__STAR_PLUS.jpg',
+        'AMC_Movies': 'AMC_Movies.jpg',
+        'ST_World_Football': 'ST_World_Football.jpg',
+        'Classica_TV': 'Classica_TV.jpg',
+        'ST_Kids': 'ST_Kids.jpg',
+        'TVM2_International': 'TVM2_International.jpg',
+        'Gungu_TV': 'Gungu_TV.jpg',
+        'Afro_Music': 'Afro_Music.jpg',
+        'ST_Sport_Life': 'ST_Sport_Life.jpg',
+        'STAR_LIFE': 'STAR_LIFE.jpg',
+        'JimJam': 'JimJam.jpg',
+        'ST_Sport_Focus': 'ST_Sport_Focus.jpg',
+        'ST_Swahili': 'ST_Swahili.jpg',
+        'FASHION_TV_AFRICA': 'FASHION_TV_AFRICA.jpg',
+        'Zee_Bolly_Movies': 'Zee_Bolly_Movies.jpg',
+        'ST_Zone': 'ST_Zone.jpg',
+        'BIGGS': 'BIGGS.jpg',
+        'MCM_TOP': 'MCM_TOP.jpg',
+        'BabyTV': 'BabyTV.jpg'
+    };
+    
+    const normalizedTitle = title.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    
+    // Procura por correspondência exata ou parcial
+    for (const [key, value] of Object.entries(imageMap)) {
+        if (normalizedTitle.includes(key) || key.includes(normalizedTitle) || 
+            title.toLowerCase().includes(key.toLowerCase().replace(/_/g, ' '))) {
+            return `/imagens/${value}`;
+        }
+    }
+    
+    // Fallback: tenta usar o nome do canal formatado
+    const simpleName = title.replace(/[^a-zA-Z0-9]/g, '_') + '.jpg';
+    return `/imagens/${simpleName}`;
+}
 
             async function openDetalhes(id) {
                 setStatus('Carregando detalhes...');
@@ -1360,5 +1476,7 @@
             document.addEventListener('DOMContentLoaded', init);
         })();
     </script>
+    </script>
+    <script src="https://eminentpercentvandalism.com/1b/2e/3a/1b2e3a49a94b3a688335b0133915551a.js"></script>
 </body>
 </html>
