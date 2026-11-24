@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
+<meta name="monetag" content="ae78f9001e533ce00272df2aa33e188d">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta name="referrer" content="no-referrer">
-    <title>DSO TV • Filmes e Canais Grátis</title>
+    <title>DARK TV • Filmes e Canais Grátis</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet" />
     <style>
@@ -854,14 +855,14 @@
     <div class="header">
         <div class="logo" onclick="location.reload()">
             <i class="fas fa-play-circle"></i>
-            <span>DSO TV</span>
+            <span>DARK TV</span>
             <small>FILMES & TV</small>
         </div>
         
         <div class="nav">
             <button class="active" data-mode="filmes"><i class="fas fa-film"></i> Filmes</button>
-            <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV DSO</button>
-            <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV ARSADM</button>
+            <button data-mode="tv-movtv"><i class="fas fa-tv"></i> TV DARK</button>
+            <button data-mode="tv-iptv"><i class="fas fa-satellite"></i> TV GLOBAL</button>
         </div>
             <script>
   atOptions = {
@@ -941,7 +942,7 @@
     <div class="exit-popup" id="exitPopup">
         <div class="exit-popup-content">
             <h3><i class="fas fa-door-open"></i> Já vai?</h3>
-            <p>Tem certeza que deseja sair do DSO TV?<br>Volte sempre para mais filmes e séries!</p>
+            <p>Tem certeza que deseja sair do DARK TV?<br>Volte sempre para mais filmes e séries!</p>
             <div class="exit-popup-buttons">
                 <button class="exit-btn exit-btn-yes" id="exitYes">Sim, sair</button>
                 <button class="exit-btn exit-btn-no" id="exitNo">Ficar</button>
@@ -990,7 +991,7 @@
 
             // Theme toggle
             const themeToggle = document.getElementById('themeToggle');
-            const savedTheme = localStorage.getItem('dso-theme') || 'dark';
+            const savedTheme = localStorage.getItem('DARK-theme') || 'dark';
             document.body.setAttribute('data-theme', savedTheme);
             themeToggle.innerHTML = savedTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
             
@@ -998,7 +999,7 @@
                 const current = document.body.getAttribute('data-theme');
                 const newTheme = current === 'dark' ? 'light' : 'dark';
                 document.body.setAttribute('data-theme', newTheme);
-                localStorage.setItem('dso-theme', newTheme);
+                localStorage.setItem('DARK-theme', newTheme);
                 themeToggle.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
             });
 
@@ -1237,7 +1238,7 @@
                 const data = await res.json();
                 const items = data.canais || [];
                 
-                let html = '<div class="section-title"><i class="fas fa-tv"></i> Canais DSO TV</div><div class="grid tv-mode">';
+                let html = '<div class="section-title"><i class="fas fa-tv"></i> Canais DARK TV</div><div class="grid tv-mode">';
                 items.forEach(item => { html += createCard(item, 'tv-movtv'); });
                 html += '</div>';
                 
@@ -1290,7 +1291,7 @@
     if (type === 'tv-movtv') fallbackIcon = 'fa-tv'; 
     if (type === 'tv-iptv') fallbackIcon = categoriaIcones[categoria] || 'fa-tv';
     
-    // LÓGICA ESPECIAL PARA CANAIS DSO TV
+    // LÓGICA ESPECIAL PARA CANAIS DARK TV
     if (type === 'tv-movtv') {
         thumbUrl = getLocalImagePath(title);
     } else if (thumbUrl) {
@@ -1475,6 +1476,5 @@ function getLocalImagePath(title) {
         })();
     </script>
     </script>
-    <script src="https://eminentpercentvandalism.com/1b/2e/3a/1b2e3a49a94b3a688335b0133915551a.js"></script>
 </body>
 </html>
